@@ -99,14 +99,14 @@ c     Calculate xi trial
 
 c     Trial stress
       DO K1 = 1, 3
-        SIGMA_TR(K1) = P_KA * treps + BETA_P_TR(K1)
-        SIGMA_TR(K1 + 3) = BETA_P_TR(K1 + 3)
+        SIGMA_TR(K1) = P_KA * treps + BETA_P_TR_PAR(K1)
+        SIGMA_TR(K1 + 3) = BETA_P_TR_PAR(K1 + 3)
       END DO
 
 c     Trial Consistent Tangent
       DO K1 = 1, 6
         DO K2 = 1, 6
-          TAN_TR(K1, K2) = P_KA * xioi(K1, K2) + fac1 * xpp(K1, K2)
+          TAN_TR(K1, K2) = P_KA * xioi(K1, K2) + fac5 * xpp(K1, K2)
         END DO 
       END DO
 
