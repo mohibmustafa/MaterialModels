@@ -1,8 +1,8 @@
-***************************************
-**UMAT - Linear Isotropic Viscoelastic
+****************************************************
+**UMAT - Linear Isotropic Viscoelastic Viscoplastic
 **1 Element - Relaxation Test
-**Mohib Mustafa - IMDEA 2 Dec 2020
-***************************************
+**Mohib Mustafa - IMDEA 13 Jan 2020
+****************************************************
 *node
 1, 0., 0., 0.
 2, 1., 0., 0.
@@ -25,11 +25,11 @@
 1.
 **
 *MATERIAL,NAME=U1
-*USER MATERIAL,TYPE=mechanical,constants=6
-** kappa, mu0, mu1, eta1, Y0, eta0
-175000.0, 40000.0, 40000.0, 1000.0, 10.0, 0.0
+*USER MATERIAL,TYPE=mechanical,constants=8
+** kappa,     mu0,     mu1,   eta1,   Y0,  h,    H,  eta0
+175000.0, 40000.0, 40000.0, 1000.0, 10.0, 0.5, 1.0, 1000.0
 *DEPVAR
-12
+13
 *STEP, name=Step-1, inc=10000
 *Static
 0.001,0.01,0.001,0.001

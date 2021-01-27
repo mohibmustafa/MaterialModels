@@ -1,7 +1,7 @@
 ******************************************************************
-**UMAT - Linear Isotropic Viscoelastic with perfect J2 Plasticity
+**UMAT - Linear Isotropic Viscoelastic Viscoplastic
 **1 Element - Strain Control Monotonic Test
-**Mohib Mustafa - IMDEA 7 Jan 2021
+**Mohib Mustafa - IMDEA 13 Jan 2021
 ******************************************************************
 *node
 1, 0., 0., 0.
@@ -25,11 +25,11 @@
 1.
 **
 *MATERIAL,NAME=U1
-*USER MATERIAL,TYPE=mechanical,constants=6
-** kappa, mu0, mu1, eta1, Y0, eta0
-175000.0, 40000.0, 40000.0, 1000.0, 10.0, 1000.0
+*USER MATERIAL,TYPE=mechanical,constants=8
+** kappa,     mu0,     mu1,   eta1,   Y0,  h,    H,  eta0
+175000.0, 40000.0, 40000.0, 1000.0, 10.0, 0.5, 1.0, 1000.0
 *DEPVAR
-12
+13
 **
 *STEP, name=Step-1, inc=1000
 *Static

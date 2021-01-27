@@ -56,7 +56,9 @@ c     Get material properties
       P_MU1=PROPS(3)
       P_ETA1=PROPS(4)
       P_Y0=PROPS(5)
-      P_ETA0=PROPS(6)
+      P_h=PROPS(6)
+      p_hh=PROPS(7)
+      P_ETA0=PROPS(8)
 
       eff = (TWO * P_MU1) / (ONE + (TWO * P_MU1 * DTIME) / P_ETA1)
       fac1 = TWO * P_MU0 + eff
