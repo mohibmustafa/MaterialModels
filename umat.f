@@ -119,7 +119,7 @@ c     Calculate norm of Beta trial - Plastic
       mod_beta_p_tr = (mod_beta_p_tr)**0.5D0
 
 c     Trial yield function
-      CHI_TR = mod_beta_p_tr - P_Y0 * (TWO/THREE)**0.5D0
+      CHI_TR = mod_beta_p_tr - (P_Y0 + xi_tr) * (TWO/THREE)**0.5D0
 
 C     Viscoelastic Predictor step
       IF(CHI_TR .LE. ZERO) THEN
@@ -143,7 +143,8 @@ C       Update Modulus
 C     Plastic Corrector Step
       ELSE
 C       Calculate plastic strain parameter
-        gam = CHI_TR / ((P_ETA0 / DTIME) + fac1)
+        gam = CHI_TR / 
+     1        (fac5 + P_hh + (TWO / THREE)*P_h + (P_ETA0 / DTIME))
 
 c       Calculate N
         DO K1 = 1, 6
@@ -159,7 +160,7 @@ c       Calculate N diadic N
 
 C       Correct Beta
         DO K1 = 1, 6
-          BETA(K1) = BETA_TR(K1) - eff * gam * ret(K1)      
+          BETA(K1) = BETA_TR(K1) - fac1 * gam * ret(K1)      
         END DO
 
 C       Update internal variables
@@ -167,21 +168,23 @@ C       Update internal variables
             STATEV(K1) = STATEV(K1) + (DTIME / P_ETA1) * BETA(K1)
             STATEV(K1 + 6) = STATEV(K1 + 6) + gam * ret(K1) 
         END DO
+        STATEV(13) = STATEV(13) + gam * (TWO / THREE)**0.5D0 
 
 C       Correct Stress
         DO K1 = 1, 6
-          STRESS(K1) = SIGMA_TR(K1) - fac1 * gam * ret(K1)
+          STRESS(K1) = SIGMA_TR(K1) - fac5 * gam * ret(K1)
         END DO
 
 C       Correct Consistent Tangent
-        fac2 = fac1 / mod_beta_p_tr
+        fac2 = fac5 / mod_beta_p_tr
         fac4 = gam * fac2
-        fac3 = ((fac1) / ((P_ETA0 / DTIME) + fac1)) - fac4
+        fac3 = ((fac5) /
+     1         (fac5 + P_hh + (TWO / THREE)*P_h + (P_ETA0 / DTIME))) - fac4
         
         DO K1 = 1, 6
           DO K2 = 1, 6
             DDSDDE(K1, K2) = TAN_TR(K1, K2) 
-     1                     - fac1 * (fac3 * retoret(K1, K2)
+     1                     - fac5 * (fac3 * retoret(K1, K2)
      2                     + fac4 * xpp(K1, K2))
           END DO
         END DO
