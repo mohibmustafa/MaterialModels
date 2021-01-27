@@ -20,9 +20,10 @@ C Mohib Mustafa - IMDEA 13 Jan 2021
 C     List of internal variables:
       DIMENSION xioi(6, 6), xii(6, 6), xpp(6, 6), retoret(6, 6)
       DIMENSION ret(6), dev(6), BETA_TR(6), BETA(6), BETA_P_TR(6)
+      DIMENSION BETA_P_TR_PAR(6)
       DIMENSION STRAIN(6), SIGMA_TR(6), TAN_TR(6, 6)
-      DOUBLE PRECISION treps, mod_beta_p_tr, CHI_TR, gam
-      DOUBLE PRECISION fac1, fac2, fac3, fac4, mod_ret, eff
+      DOUBLE PRECISION treps, mod_beta_p_tr, CHI_TR, gam, xi_tr
+      DOUBLE PRECISION fac1, fac2, fac3, fac4, mod_ret, fac5
 C
       PARAMETER(ZERO=0.D0, ONE=1.D0, TWO=2.D0, THREE=3.D0, SIX=6.D0,
      1          ENUMAX=.4999D0, NEWTON=10, TOLER=1.0D-6)
@@ -57,11 +58,11 @@ c     Get material properties
       P_ETA1=PROPS(4)
       P_Y0=PROPS(5)
       P_h=PROPS(6)
-      p_hh=PROPS(7)
+      P_hh=PROPS(7)
       P_ETA0=PROPS(8)
 
-      eff = (TWO * P_MU1) / (ONE + (TWO * P_MU1 * DTIME) / P_ETA1)
-      fac1 = TWO * P_MU0 + eff
+      fac1 = (TWO * P_MU1) / (ONE + (TWO * P_MU1 * DTIME) / P_ETA1)
+      fac5 = TWO * P_MU0 + fac1
 
 C     Get Strain at time step n+1
       DO K1 = 1, 6
@@ -79,14 +80,22 @@ c     Deviator of strain at time step n+1
       
 c     Calculate Beta trial - VE
       DO K1 = 1, 6
-        BETA_TR(K1) = eff * (dev(K1) - STATEV(K1) - STATEV(K1 + 6))    
+        BETA_TR(K1) = fac1 * (dev(K1) - STATEV(K1) - STATEV(K1 + 6))    
       END DO
 
-c     Calculate Beta trial - Plastic
+c     Calculate Beta trial - Plastic - Partial 
       DO K1 = 1, 6
-        BETA_P_TR(K1) = TWO * P_MU0 * (dev(K1) - STATEV(K1 + 6))
+        BETA_P_TR_PAR(K1) = TWO * P_MU0 * (dev(K1) - STATEV(K1 + 6))
      1                + BETA_TR(K1)    
       END DO
+
+c     Calculate Beta trial - Plastic 
+      DO K1 = 1, 6
+        BETA_P_TR(K1) = BETA_P_TR_PAR(K1) - P_hh * STATEV(K1 + 6)
+      END DO
+
+c     Calculate xi trial
+      xi_tr = P_h * STATEV(13)
 
 c     Trial stress
       DO K1 = 1, 3
