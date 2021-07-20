@@ -1,6 +1,6 @@
-C     UMAT - Isotropic Hyperelastic from Computational inealsticity
-C     Goal is to implement just the initail stored energy formulation
-C     Later it will be modified to incorporate Kinematically non linear VE
+C     UMAT - Finite strain VE
+C     Initial Stored energy formulation based on Computational Inelasticity by Simo
+C     Initial Stored energy is given in Chapter 10, Example 10.4.1 
 
 C     Mohib Mustafa - IMDEA 14 JULY 2021
             
@@ -118,7 +118,7 @@ C     !--------------------------------------------------------------
         mu1=PROPS(3)
         eta1=PROPS(4)
         
-        write(*,*) 'dt : ', DTIME
+        ! write(*,*) 'dt : ', DTIME
         ! write(*,*) 'kappa : ', kappa
         ! write(*,*) 'mu0 : ', mu0
         ! write(*,*) 'mu1 : ', mu1
@@ -150,31 +150,31 @@ C     !--------------------------------------------------------------
         F_bar_n(:, :) = (J_n ** (-ONE / THREE)) * DFGRD0(:, :)
         !CALL matInv(F_bar_n(:, :), F_bar_inv_n(:, :))
 
-        WRITE(*,*) 'F : '
-        DO K1 = 1, 3
-          WRITE(*,*) DFGRD1(K1, :)
-        END DO
+        ! WRITE(*,*) 'F : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) DFGRD1(K1, :)
+        ! END DO
 
-        WRITE(*,*) 'F_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) DFGRD0(K1, :)
-        END DO
+        ! WRITE(*,*) 'F_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) DFGRD0(K1, :)
+        ! END DO
 
-        WRITE(*,*) 'J : ', J
-        WRITE(*,*) ''
+        ! WRITE(*,*) 'J : ', J
+        ! WRITE(*,*) ''
 
-        WRITE(*,*) 'J_n : ', J_n
-        WRITE(*,*) ''
+        ! WRITE(*,*) 'J_n : ', J_n
+        ! WRITE(*,*) ''
 
-        WRITE(*,*) 'F_bar : '
-        DO K1 = 1, 3
-          WRITE(*,*) F_bar(K1, :)
-        END DO
+        ! WRITE(*,*) 'F_bar : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) F_bar(K1, :)
+        ! END DO
 
-        WRITE(*,*) 'F_bar_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) F_bar_n(K1, :)
-        END DO
+        ! WRITE(*,*) 'F_bar_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) F_bar_n(K1, :)
+        ! END DO
 
 
         H_n(1, 1) = STATEV(1)
@@ -187,10 +187,10 @@ C     !--------------------------------------------------------------
         H_n(3, 1) = STATEV(5)
         H_n(3, 2) = STATEV(6)
 
-        WRITE(*,*) 'H_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) H_n(K1, :)
-        END DO
+        ! WRITE(*,*) 'H_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) H_n(K1, :)
+        ! END DO
         
 
     !     !Calculate C
@@ -215,10 +215,10 @@ C     !--------------------------------------------------------------
          END DO
         END DO
 
-        WRITE(*,*) 'C_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) C_n(K1, :)
-        END DO
+        ! WRITE(*,*) 'C_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) C_n(K1, :)
+        ! END DO
 
 
 
@@ -255,22 +255,22 @@ C     !--------------------------------------------------------------
          END DO
         END DO
 
-        WRITE(*,*) 'B_bar : '
-        DO K1 = 1, 3
-          WRITE(*,*) B_bar(K1, :)
-        END DO
+        ! WRITE(*,*) 'B_bar : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) B_bar(K1, :)
+        ! END DO
 
 
         CALL dev(B_bar, dev_B_bar)
 
         trB_bar = B_bar(1, 1) + B_bar(2, 2) + B_bar(3, 3)
       
-        WRITE(*,*) 'dev_B_bar : '
-        DO K1 = 1, 3
-          WRITE(*,*) dev_B_bar(K1, :)
-        END DO
+        ! WRITE(*,*) 'dev_B_bar : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) dev_B_bar(K1, :)
+        ! END DO
 
-        Write(*,*) 'tr[B_bar] : ', trB_bar
+        ! Write(*,*) 'tr[B_bar] : ', trB_bar
         
         !Calculate initial Kirchoff stress dev
         tau_o_bar(:, :) = mu0 * dev_B_bar(:, :)
@@ -282,27 +282,27 @@ C     !--------------------------------------------------------------
         tau_o_bar_v(5) = tau_o_bar(1, 3)
         tau_o_bar_v(6) = tau_o_bar(2, 3)
        
-        WRITE(*,*) 'tau_o_bar : '
-        DO K1 = 1, 3
-          WRITE(*,*) tau_o_bar(K1, :)
-        END DO
+        ! WRITE(*,*) 'tau_o_bar : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) tau_o_bar(K1, :)
+        ! END DO
 
-        WRITE(*,*) 'tau_o_bar_v : ', tau_o_bar_v(:)
+        ! WRITE(*,*) 'tau_o_bar_v : ', tau_o_bar_v(:)
 
         CALL ddev(mu0 * I_mat(:, :), C_n(:, :), S_til_o_n(:, :))
         
-        WRITE(*,*) 'S_til_o_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) S_til_o_n(K1, :)
-        END DO
+        ! WRITE(*,*) 'S_til_o_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) S_til_o_n(K1, :)
+        ! END DO
         
         H_til_n(:, :) = EXP(-DTIME / tau1) * H_n(:, :) 
      1             - EXP(-DTIME / (TWO * tau1)) * S_til_o_n(:, :)
 
-        WRITE(*,*) 'H_til_n : '
-        DO K1 = 1, 3
-          WRITE(*,*) H_til_n(K1, :)
-        END DO
+        ! WRITE(*,*) 'H_til_n : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) H_til_n(K1, :)
+        ! END DO
 
          
         !Calculate S_til_o
@@ -321,10 +321,10 @@ C     !--------------------------------------------------------------
           END DO
         END DO
 
-        WRITE(*,*) 'S_til_o : '
-        DO K1 = 1, 3
-          WRITE(*,*) S_til_o(K1, :)
-        END DO
+        ! WRITE(*,*) 'S_til_o : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) S_til_o(K1, :)
+        ! END DO
 
         
         
@@ -338,13 +338,13 @@ C     !--------------------------------------------------------------
         STATEV(5) = H(1, 3)
         STATEV(6) = H(2, 3)
 
-        WRITE(*,*) 'H : '
-        DO K1 = 1, 3
-          WRITE(*,*) H(K1, :)
-        END DO
+        ! WRITE(*,*) 'H : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) H(K1, :)
+        ! END DO
 
-        WRITE(*,*) 'STAT : ', STATEV(1 : 6)
-        write(*,*) '------------------------------------------------'
+        ! WRITE(*,*) 'STAT : ', STATEV(1 : 6)
+        ! write(*,*) '------------------------------------------------'
         p = 0.5D0 * kappa * (J - (ONE / J))
 
         
