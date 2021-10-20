@@ -76,7 +76,7 @@ C     !-------------------------------------------------------------------------
         REAL(prec) :: facve(3), fac1, fac2, fac3, fac4, fac5, fac6 
         REAL(prec) :: fac7, BB1, BB2, BB3, BB4, BB5, BB6   
         REAL(prec) :: ka, mu0, mu(3), eta(3) 
-        REAL(prec) :: h, hh, y0, eta0, m, s, ss, dflag
+        REAL(prec) :: h, hh, y0, eta0, m, s, ss, dflag, dump_flag
        
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
         REAL(prec), PARAMETER :: THREE=3.D0, SIX=6.D0, ENUMAX=.4999D0
@@ -127,6 +127,7 @@ C     !-------------------------------------------------------------------------
         EPS_VP(:) = STATEV(19 : 24)
         xi = STATEV(25)
         D = STATEV(26)
+        dump_flag = STATEV(27)
             
         !Trace of strain at time step n+1    
         treps = EPS(1) + EPS(2) + EPS(3)
@@ -195,7 +196,7 @@ C     !-------------------------------------------------------------------------
         !         IF Viscoelastic Domain at trial state is not breached 
         !                         Return trial state 
         !-----------------------------------------------------------------------
-        IF (CHI_TR .LE. ZERO) THEN
+        IF ((CHI_TR .LE. ZERO) .OR. (dump_flag .GE. 5.D0)) THEN
       
           !Update Internal Variables - alphas need to be updated at this point
           !(Retundent for eps_vp, xi and D)
@@ -267,6 +268,10 @@ C     !-------------------------------------------------------------------------
      1        * ((TWO/THREE) ** 0.5d0) * ((Y_i/ss) ** s)
           BB6 = ONE - D - BB5
 
+          ! IF (BB6 .LE. 0.00001D0) THEN
+          !   BB6 = 0.00001D0
+          ! END IF
+
 
           !Compute resuidual and tangent for newton raphson
           G_i = m * fac4 * (BB4) ** (m - ONE) 
@@ -312,6 +317,10 @@ C     !-------------------------------------------------------------------------
      1          * ((TWO/THREE) ** 0.5d0) * ((Y_i/ss) ** s)
             BB6 = ONE - D - BB5
 
+            ! IF (BB6 .LE. 0.00001D0) THEN
+            !   BB6 = 0.00001D0
+            ! END IF
+
             !Compute resuidual and tangent for newton raphson
             G_i = m * fac4 * (BB4) ** (m - ONE) 
      1           - fac5 * BB5 + fac5 * BB6        
@@ -326,6 +335,28 @@ C     !-------------------------------------------------------------------------
           IF (rap_iter .GE. 25) THEN
             PNEWDT = 0.5d0
             RETURN
+          
+          ELSE IF (D + BB5 .GE. 0.99999D0) THEN
+            
+            STATEV(27) = 6.D0
+            ! WRITE(*,*) 'Dump : ', STATEV(27)
+
+            STATEV(1 : 6) = alpha_i(:, 1)        
+            STATEV(7 : 12) = alpha_i(:, 2)
+            STATEV(13 : 18) = alpha_i(:, 3)
+            STATEV(19 : 24) = EPS_VP_i(:)
+            STATEV(25) = xi_i
+            STATEV(26) = 0.99999D0
+
+          !Update Stress and Consistent Tangent modulus to trial values 
+          !after converting them to effective values for the RVE        
+            STRESS(:) = SIGMA_TR(:) * (ONE - STATEV(26))
+            DDSDDE(:, :) = (ka * xioi(:, :) + fac1 * xpp(:, :)) 
+     1                   * (ONE - STATEV(26))
+
+
+            RETURN
+
           ELSE
             !Pass converged internal variables from Newton Raphson solver
             STATEV(1 : 6) = alpha_i(:, 1)        
@@ -335,11 +366,38 @@ C     !-------------------------------------------------------------------------
             STATEV(25) = xi_i
             STATEV(26) = D + BB5
 
-            IF (STATEV(26) .LE. 0.D0) THEN
-              STATEV(26) = D + BB5
-            ELSE
-              STATEV(26) = 0.9D0
-            END IF
+            ! IF (STATEV(26) .GE. 0.999999D0) THEN
+            !   STATEV(27) = 6.D0
+            ! WRITE(*,*) 'Dump : ', STATEV(27)
+            ! END IF
+
+            ! WRITE(*,*) 'alpha_1 : ', STATEV(1 : 6)
+
+            ! WRITE(*,*) ' '
+            ! WRITE(*,*) 'alpha_2 : ', STATEV(7 : 12)
+
+            ! WRITE(*,*) ' '
+            ! WRITE(*,*) 'alpha_3 : ', STATEV(13 : 18)
+            
+            ! WRITE(*,*) ' '
+            ! WRITE(*,*) 'eps_vp : ', STATEV(19 : 24)
+            
+            ! WRITE(*,*) ' '
+            ! WRITE(*,*) 'xi_i : ', STATEV(25)
+            
+            ! WRITE(*,*) ' '
+            ! WRITE(*,*) 'D : ', STATEV(26)
+
+            
+            ! WRITE(*, *) 'R : ', res_i
+
+            ! WRITE(*,*) ' '
+
+            ! WRITE(*, *) 'G : ', G_i
+
+            
+
+            ! WRITE(*, *) '-------------------------------------------'
 
             !Correct Sigma for matrix material
             SIGMA(:) = SIGMA_TR(:) - fac1 * GAM_i * ret(:)
