@@ -1,0 +1,185 @@
+**********************************************************************
+**UMAT - Linear Isotropic Elastic Plastic Iso Hardening Lamitre Damage 
+**1 Element - Strain Control Cyclic Test
+**Mohib Mustafa - IMDEA 8 Feb 2021
+**********************************************************************
+*node
+1, 0., 0., 0.
+2, 1., 0., 0.
+3, 1., 1., 0.
+4, 0., 1., 0.
+5, 0., 0., 1.
+6, 1., 0., 1.
+7, 1., 1., 1.
+8, 0., 1., 1.
+**
+*nset, nset=top
+4,3,7,8
+*nset, nset=bottom
+1,2,5,6
+**
+*element,TYPE=C3D8,ELSET=element1
+1,1,2,3,4,5,6,7,8
+**
+*SOLID SECTION,ELSET=element1, MATERIAL=U1
+1.
+**
+*MATERIAL,NAME=U1
+*USER MATERIAL,TYPE=mechanical,constants=10
+** kappa,     mu0,     mu1,   eta1,   Y0,      h,      H,   eta0,  S0,  s0
+175000.0, 40000.0, 40000.0, 1000.0, 10.0, 1200.0, 1200.0, 1000.0,
+0.0001, 2.0
+*DEPVAR
+14
+**********************************************
+**
+*STEP, name=Step-1, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0003
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-2, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-3, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,-0.0003
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-4, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-5, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0003
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-6, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-7, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,-0.0003
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+**********************************************
+**
+*STEP, name=Step-8, inc=1000
+*Static
+0.00001,0.001,0.00001,0.00001
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.0
+**
+*NODE PRINT
+U
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP

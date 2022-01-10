@@ -1,0 +1,10 @@
+{
+  "mod_dirs": [
+    "src",
+    "ins"
+  ],
+  "excl_paths": ["src/Debug", "src/Release"],
+  "excl_suffixes": [".u2d", ".vfproj", ".sln", ".txt"],
+  "lowercase_intrinsics": false,
+  "debug_log": false
+}

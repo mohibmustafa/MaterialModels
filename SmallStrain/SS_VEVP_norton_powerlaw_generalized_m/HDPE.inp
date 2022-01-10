@@ -1,0 +1,102 @@
+********************************
+**UMAT 3D J2 PLASTICITY NON LINEAR ISOTROPIC HARDENING
+**Mohib IMDEA 20 DEC 2020
+********************************
+*node
+1, 0., 0., 0.
+2, 1., 0., 0.
+3, 1., 1., 0.
+4, 0., 1., 0.
+5, 0., 0., 1.
+6, 1., 0., 1.
+7, 1., 1., 1.
+8, 0., 1., 1.
+**
+*nset, nset=top
+4,3,7,8
+*nset, nset=bottom
+1,2,5,6
+**
+*element,TYPE=C3D8,ELSET=element1
+1,1,2,3,4,5,6,7,8
+**
+*SOLID SECTION,ELSET=element1, MATERIAL=U1
+1.
+**
+*MATERIAL,NAME=U1
+*USER MATERIAL,TYPE=mechanical,constants=13
+** kappa,  mu0,   mu1,  mu2, mu3,   eta1, eta2, eta3,  h, H , Y0, eta0, m
+1250.0, 577.0, 340.0, 130.0, 25.0, 37400.0, 1300, 125,
+28.0, 0.0, 10.0, 106.0, 7.0 
+*DEPVAR
+25
+*STEP, name=Step-1, inc=1000
+*Static
+1.0,280.0,1.0,1.0
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.028
+*OUTPUT, FIELD, VARIABLE=PRESELECT, FREQ=1
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+*STEP, name=Step-2, inc=1000
+*Static
+1.0,170.0,1.0,1.0
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.011
+*OUTPUT, FIELD, VARIABLE=PRESELECT, FREQ=1
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+*STEP, name=Step-3, inc=1000
+*Static
+1.0,390.0,1.0,1.0
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.05
+*OUTPUT, FIELD, VARIABLE=PRESELECT, FREQ=1
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+*STEP, name=Step-4, inc=1000
+*Static
+1.0,190.0,1.0,1.0
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.031
+*OUTPUT, FIELD, VARIABLE=PRESELECT, FREQ=1
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+*STEP, name=Step-5, inc=1000
+*Static
+1.0,400.0,1.0,1.0
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.071
+*OUTPUT, FIELD, VARIABLE=PRESELECT, FREQ=1
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP

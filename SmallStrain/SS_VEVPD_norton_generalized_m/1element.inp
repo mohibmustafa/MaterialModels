@@ -1,0 +1,50 @@
+***********************************
+**UMAT Isotropic Linear Elastic
+**Mohib Mustafa, IMDEA 5 Dec 2020
+***********************************
+*node
+1, 0., 0., 0.
+2, 1., 0., 0.
+3, 1., 1., 0.
+4, 0., 1., 0.
+5, 0., 0., 1.
+6, 1., 0., 1.
+7, 1., 1., 1.
+8, 0., 1., 1.
+**
+*nset, nset=top
+4,3,7,8
+*nset, nset=bottom
+1,2,5,6
+**
+*element,TYPE=C3D8,ELSET=element1
+1,1,2,3,4,5,6,7,8
+**
+*SOLID SECTION,ELSET=element1, MATERIAL=U1
+1.
+**
+*MATERIAL,NAME=U1
+*USER MATERIAL,TYPE=mechanical,constants=15
+** kappa,    mu0,    mu1, mu2, mu3,  eta1, eta2,eta3,  h, H , Y0, eta0, m, s, S
+1872.03, 529.827, 46.035, 0.0, 0.0, 594.0,  1.0, 1.0,
+279.186, 0.0, 47.020, 2.260, 2.392, 0.5, 0.09
+*DEPVAR
+26
+*STEP, name=Step-1, inc=1000
+*Static
+.01,1.0,.01,.01
+**
+*BOUNDARY
+1,1,3,0.
+2,2,3,0.
+5,1,2,0.
+6,2,2,0.
+top,2,2,0.1
+**
+*OUTPUT, FIELD, VARIABLE=PRESELECT
+*ELEMENT OUTPUT, ELSET=element1
+SDV	
+*END STEP
+
+
+
