@@ -59,20 +59,23 @@ C     !--------------------------------------------------------------
         REAL(prec), INTENT(OUT)   :: ddsdde(ntens,ntens)
 
         !List of internal variables
-        INTEGER    :: index, ii, jj, mm, ll, K1, K2
-        REAL(prec) :: I(6), m2v(3, 3), B_bar(3, 3), tau(3, 3)
-        REAL(prec) :: F_inv(3, 3), F_bar(3, 3), BB1(6, 6), C_n(3, 3)
+        INTEGER    :: index, ii, jj, mm, nn, K1, K2, ll
+        REAL(prec) :: I(6), m2v(3, 3), Be_bar_tr(3, 3), tau_tr(3, 3)
+        REAL(prec) :: F_n_inv(3, 3), ff(3, 3), BB1(6, 6), C_n(3, 3)
         REAL(prec) :: c_strike(6, 6), xioi(6, 6), xii(6, 6)
-        REAL(prec) :: c_strike_bar(6, 6), F_bar_inv(3, 3), g_star
-        REAL(prec) :: dev_B_bar(3, 3), trB_bar, dev_tau(6), J_n
-        REAL(prec) :: F_bar_n(3, 3), F_bar_inv_n(3, 3), C_bar(3, 3)
-        REAL(prec) :: J, kappa, mu0, mu1, eta1, muinf, ginf, g1, tau1
-        REAL(prec) :: tau_o_bar(3, 3), S_til_o_n(3, 3), H_til_n(3, 3)
-        REAL(prec) :: S_til_o(3, 3), H(3, 3), p, I_mat(3, 3)
-        REAL(prec) :: H_n(3, 3), C_bar_n(3, 3), D(3, 3), xpp(6, 6)
-        REAL(prec) :: hh_bar_n(3, 3), h_bar_n, C(3, 3), tau_v(6)
-        REAL(prec) :: tau_o_bar_v(6), BB2(6, 6), BB3(6, 6), BB4(6, 6)
-        REAL(prec) :: hh_bar_n_v(6), c_strike_o_bar(6, 6)
+        REAL(prec) :: c_strike_tr(6, 6), F_bar_inv(3, 3), alpha_n
+        REAL(prec) :: dev_Be_bar_tr(3, 3), trBe_bar_tr, dev_tau(6)
+        REAL(prec) :: ff_bar(3, 3), F_bar_inv_n(3, 3), C_bar(3, 3)
+        REAL(prec) :: J, kappa, mu, Y0, K, J_n, mu_bar, chi_tr
+        REAL(prec) :: s_tr(3, 3), norm_s_tr, ret(6), retsq(6)
+        REAL(prec) :: H(3, 3), p, I_mat(3, 3), dev_retsq(6)
+        REAL(prec) :: Be_bar_n(3, 3), C_bar_n(3, 3), BB4(6, 6)
+        REAL(prec) :: C(3, 3), tau_tr_v(6), beta3, beta4, BB3(6, 6)
+        REAL(prec) :: s_tr_v(6), BB2(6, 6), beta0, beta1, beta2
+        REAL(prec) :: c_strike_bar_tr(6, 6), xpp(6, 6), retoret(6, 6)
+        REAL(prec) :: c_strike_ep_tr(6, 6), gamma, s_v(6), tau_v(6)
+        REAL(prec) :: c_strike_ep(6, 6), ret_mat(3, 3),retsq_mat(3,3)
+        REAL(prec) :: dev_retsq_mat(3, 3)
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
         REAL(prec), PARAMETER :: THREE=3.D0, FOUR= 4.D0, SIX=6.D0
@@ -113,326 +116,343 @@ C     !--------------------------------------------------------------
 
         !Get material properties
         kappa=PROPS(1)
-        mu0=PROPS(2)
-        mu1=PROPS(3)
-        eta1=PROPS(4)
+        mu=PROPS(2)
+        Y0=PROPS(3)
+        K=PROPS(4)
         
-        ! write(*,*) 'dt : ', DTIME
+        write(*,*) 'dt : ', DTIME
         ! write(*,*) 'kappa : ', kappa
-        ! write(*,*) 'mu0 : ', mu0
-        ! write(*,*) 'mu1 : ', mu1
-        ! write(*,*) 'eta1 : ', eta1
-
-        !Calculate other derived material parameters
-        muinf=mu0 - mu1
-        ginf=muinf/mu0
-        g1=mu1/mu0
-        tau1=eta1/mu1
-        g_star = ginf + g1 * EXP((-DTIME/(TWO * tau1))) 
-
-        ! write(*,*) 'muinf : ', muinf
-        ! write(*,*) 'ginf : ', ginf
-        ! write(*,*) 'g1 : ', g1
-        ! write(*,*) 'tau1 : ', tau1
-        ! write(*,*) 'g_star : ', g_star
-
+        ! write(*,*) 'mu : ', mu
+        ! write(*,*) 'Y0 : ', Y0
+        ! write(*,*) 'K : ', K
+        
+        
         !Calculate determinant of deformation gradient
         J = determinant(DFGRD1(:,:))
         J_n = determinant(DFGRD0(:,:))
 
         !Calculate inverse of deformation gradient
-        !CALL matInv(DFGRD1(:,:), F_inv(:, :))
+        CALL matInv(DFGRD0(:, :), F_n_inv(:, :))
         
-        F_bar(:, :) = (J ** (-ONE / THREE)) * DFGRD1(:, :)
-        CALL matInv(F_bar(:, :), F_bar_inv(:, :))
-
-        F_bar_n(:, :) = (J_n ** (-ONE / THREE)) * DFGRD0(:, :)
-        !CALL matInv(F_bar_n(:, :), F_bar_inv_n(:, :))
-
-        ! WRITE(*,*) 'F : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) DFGRD1(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'F_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) DFGRD0(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'J : ', J
-        ! WRITE(*,*) ''
-
-        ! WRITE(*,*) 'J_n : ', J_n
-        ! WRITE(*,*) ''
-
-        ! WRITE(*,*) 'F_bar : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) F_bar(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'F_bar_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) F_bar_n(K1, :)
-        ! END DO
-
-
-        H_n(1, 1) = STATEV(1)
-        H_n(2, 2) = STATEV(2)
-        H_n(3, 3) = STATEV(3)
-        H_n(1, 2) = STATEV(4)
-        H_n(1, 3) = STATEV(5)
-        H_n(2, 1) = STATEV(4)
-        H_n(2, 3) = STATEV(6)
-        H_n(3, 1) = STATEV(5)
-        H_n(3, 2) = STATEV(6)
-
-        ! WRITE(*,*) 'H_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) H_n(K1, :)
-        ! END DO
-        
-
-    !     !Calculate C
-    !     C(:, :) = ZERO
-    !     DO K1 = 1, 3
-    !       DO ii = 1, 3
-    !         DO jj = 1, 3
-    !             C(ii, jj) = C(ii, jj) 
-    !  1                    + DFGRD1(K1, ii) * DFGRD1(K1, jj)
-    !         END DO
-    !      END DO
-    !     END DO
-
-        !Calculate C_n
-        C_n(:, :) = ZERO
+        ff(:, :) = ZERO
         DO K1 = 1, 3
           DO ii = 1, 3
             DO jj = 1, 3
-                C_n(ii, jj) = C_n(ii, jj) 
-     1                           + DFGRD0(K1, ii) * DFGRD0(K1, jj)
-            END DO
-         END DO
-        END DO
-
-        ! WRITE(*,*) 'C_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) C_n(K1, :)
-        ! END DO
-
-
-
-    !     !Calculate C_bar
-    !     C_bar(:, :) = ZERO
-    !     DO K1 = 1, 3
-    !       DO ii = 1, 3
-    !         DO jj = 1, 3
-    !             C_bar(ii, jj) = C_bar(ii, jj) 
-    !  1                             + F_bar(K1, ii) * F_bar(K1, jj)
-    !         END DO
-    !      END DO
-    !     END DO
-
-    !     !Calculate C_bar_n
-    !     C_bar_n(:, :) = ZERO
-    !     DO K1 = 1, 3
-    !       DO ii = 1, 3
-    !         DO jj = 1, 3
-    !             C_bar_n(ii, jj) = C_bar_n(ii, jj) 
-    !  1                            + F_bar_n(K1, ii) * F_bar_n(K1, jj)
-    !         END DO
-    !      END DO
-    !     END DO
-        
-        !Calculate B_bar
-        B_bar(:, :) = ZERO
-        DO K1 = 1, 3
-          DO ii = 1, 3
-            DO jj = 1, 3
-                B_bar(ii, jj) = B_bar(ii, jj) 
-     1                             + F_bar(ii, K1) * F_bar(jj, K1)
-            END DO
-         END DO
-        END DO
-
-        ! WRITE(*,*) 'B_bar : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) B_bar(K1, :)
-        ! END DO
-
-
-        CALL dev(B_bar, dev_B_bar)
-
-        trB_bar = B_bar(1, 1) + B_bar(2, 2) + B_bar(3, 3)
-      
-        ! WRITE(*,*) 'dev_B_bar : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) dev_B_bar(K1, :)
-        ! END DO
-
-        ! Write(*,*) 'tr[B_bar] : ', trB_bar
-        
-        !Calculate initial Kirchoff stress dev
-        tau_o_bar(:, :) = mu0 * dev_B_bar(:, :)
-
-        DO K1 = 1, 3
-          tau_o_bar_v(K1) = tau_o_bar(K1, K1)
-        END DO
-        tau_o_bar_v(4) = tau_o_bar(1, 2)
-        tau_o_bar_v(5) = tau_o_bar(1, 3)
-        tau_o_bar_v(6) = tau_o_bar(2, 3)
-       
-        ! WRITE(*,*) 'tau_o_bar : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) tau_o_bar(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'tau_o_bar_v : ', tau_o_bar_v(:)
-
-        CALL ddev(mu0 * I_mat(:, :), C_n(:, :), S_til_o_n(:, :))
-        
-        ! WRITE(*,*) 'S_til_o_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) S_til_o_n(K1, :)
-        ! END DO
-        
-        H_til_n(:, :) = EXP(-DTIME / tau1) * H_n(:, :) 
-     1             - EXP(-DTIME / (TWO * tau1)) * S_til_o_n(:, :)
-
-        ! WRITE(*,*) 'H_til_n : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) H_til_n(K1, :)
-        ! END DO
-
-         
-        !Calculate S_til_o
-        S_til_o(:, :) = ZERO
-        DO K1 = 1, 3
-          DO K2 = 1, 3
-            DO ii = 1, 3
-              DO jj = 1, 3
-
-                  S_til_o(ii, jj) = S_til_o(ii, jj) 
-     1             + F_bar_inv(ii, K1) 
-     2             * tau_o_bar(K1, K2) * F_bar_inv(jj, K2)
-
-              END DO
+              ff(ii, jj) = ff(ii, jj) 
+     1                   + DFGRD1(ii, K1) * F_n_inv(K1, jj)
             END DO
           END DO
         END DO
 
-        ! WRITE(*,*) 'S_til_o : '
+        ff_bar(:, :) = ff(:, :) 
+     1               * (determinant(ff(:, :))) ** (-ONE / THREE)
+
+
+        WRITE(*,*) 'F : '
+        DO K1 = 1, 3
+          WRITE(*,*) DFGRD1(K1, :)
+        END DO
+
+        WRITE(*,*) 'F_n : '
+        DO K1 = 1, 3
+          WRITE(*,*) DFGRD0(K1, :)
+        END DO
+
+        WRITE(*,*) 'J : ', J
+        WRITE(*,*) ''
+
+        WRITE(*,*) 'J_n : ', J_n
+        WRITE(*,*) ''
+
+        WRITE(*,*) 'F_n_inv : '
+        DO K1 = 1, 3
+          WRITE(*,*) F_n_inv(K1, :)
+        END DO
+
+        WRITE(*,*) 'ff : '
+        DO K1 = 1, 3
+          WRITE(*,*) ff(K1, :)
+        END DO
+
+        WRITE(*,*) 'ff_bar : '
+        DO K1 = 1, 3
+          WRITE(*,*) ff_bar(K1, :)
+        END DO
+        
+
+        
+        Be_bar_n(1, 1) = STATEV(1)
+        Be_bar_n(2, 2) = STATEV(2)
+        Be_bar_n(3, 3) = STATEV(3)
+        Be_bar_n(1, 2) = STATEV(4)
+        Be_bar_n(1, 3) = STATEV(5)
+        Be_bar_n(2, 1) = STATEV(4)
+        Be_bar_n(2, 3) = STATEV(6)
+        Be_bar_n(3, 1) = STATEV(5)
+        Be_bar_n(3, 2) = STATEV(6)
+
+        alpha_n = STATEV(7)
+
+        ! WRITE(*,*) 'Be_bar_n : '
         ! DO K1 = 1, 3
-        !   WRITE(*,*) S_til_o(K1, :)
+        !   WRITE(*,*) Be_bar_n(K1, :)
         ! END DO
-
+        ! WRITE(*,*) 'alpha_n : ', alpha_n
         
+    
         
-        H(:, :) = H_til_n(:, :) 
-     1          + EXP(-DTIME/(TWO * tau1)) * S_til_o(:, :)
-
-        DO K1 = 1, 3
-          STATEV(K1) = H(K1, K1)
-        END DO
-        STATEV(4) = H(1, 2)
-        STATEV(5) = H(1, 3)
-        STATEV(6) = H(2, 3)
-
-        ! WRITE(*,*) 'H : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) H(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'STAT : ', STATEV(1 : 6)
-        ! write(*,*) '------------------------------------------------'
-        p = 0.5D0 * kappa * (J - (ONE / J))
-
-        
-
-        !CALL devVoit(tau, dev_tau)
-        
-        D(:, :) = ZERO
-        DO K1 = 1, 3
-          DO K2 = 1, 3
-            DO ii = 1, 3
-              DO jj = 1, 3
-                D(ii, jj) = D(ii, jj) 
-     1                    + F_bar(ii, K1) * H_til_n(K1, K2) 
-     2                    * F_bar(jj, K2)
-              END DO
-            END DO
-          END DO
-        END DO
-        
-        
-        
-        CALL dev(g1 * D(:, :), hh_bar_n(:, :))
-
-        DO K1 = 1, 3
-          hh_bar_n_v(K1) = hh_bar_n(K1, K1)
-        END DO
-        hh_bar_n_v(4) = hh_bar_n(1, 2)
-        hh_bar_n_v(5) = hh_bar_n(1, 3)
-        hh_bar_n_v(6) = hh_bar_n(2, 3)
-
-        h_bar_n = g1 * (D(1, 1) + D(2, 2) + D(3, 3))
-
-        tau(:, :) = J * p * I_mat(:, :) 
-     1            + g_star * tau_o_bar(:, :) + hh_bar_n(:, :)
-
-        
-        
-        DO K1 = 1, 3
-          tau_v(K1) = tau(K1, K1)
-        END DO
-        tau_v(4) = tau(1, 2)
-        tau_v(5) = tau(1, 3)
-        tau_v(6) = tau(2, 3)
-        
-        !Return Cauchy stress to Abaqus
-        STRESS(:) = (ONE / J) * tau_v(:)
-        
-        !Algorithmic constants for the Tangent
-        BB1(:, :) = ZERO
-        DO ii = 1, 6
-          DO jj = 1, 6
-            BB1(ii, jj) = tau_o_bar_v(ii) * I(jj)
-            BB2(ii, jj) = I(ii) * tau_o_bar_v(jj)
-            BB3(ii, jj) = hh_bar_n_v(ii) * I(jj)
-            BB4(ii, jj) = I(ii) * hh_bar_n_v(jj)
-          END DO
-        END DO
-
-        c_strike_o_bar(:, :) = (-TWO / THREE) 
-     1     * (BB1(:, :) + BB2(:, :)) 
-     2     + (TWO / THREE) * mu0 * (B_bar(1, 1) + B_bar(2, 2) 
-     3     + B_bar(3, 3)) * xpp(:, :)
-
-        c_strike_bar(:, :) = g_star * c_strike_o_bar(:, :) 
-     1                     - (TWO / THREE) * (BB3(:, :) + BB4(:, :)) 
-     2                     + (TWO / THREE) * h_bar_n * xpp(:, :)
-
-        ! Tangennt in current config
-        c_strike(:, :) = c_strike_bar(:, :) 
-     1                 + J * p * (xioi(:, :) - TWO * xii(:, :)) 
-     2               + 0.5D0 * kappa * (J**TWO + ONE) * xioi(:, :)  
-       
-        !Tangent for ABAQUS
+        !Calculate Be_bar_tr
+        Be_bar_tr(:, :) = ZERO
         DO ii = 1, 3
           DO jj = 1, 3
-            DO ll = 1, 3
-              DO mm = 1, 3
-                DDSDDE(m2v(ii, jj), m2v(ll, mm))   
-     1        = DDSDDE(m2v(ii, jj), m2v(ll, mm)) 
-     2        + (ONE / J) * (c_strike(m2v(ii,jj), m2v(ll, mm)) 
-     3        + I(m2v(ii, ll)) * tau_v(m2v(mm, jj)) 
-     4        + I(m2v(jj, mm)) * tau_v(m2v(ii, ll)))
+            DO mm = 1, 3
+              DO nn = 1, 3
+                Be_bar_tr(ii, jj) = Be_bar_tr(ii, jj) 
+     1          + ff_bar(ii, mm) * Be_bar_n(mm, nn) * ff_bar(jj, nn)
               END DO
+            END DO
+         END DO
+        END DO
+
+        ! WRITE(*,*) 'Be_bar_tr : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) Be_bar_tr(K1, :)
+        ! END DO
+
+        
+
+        CALL dev(Be_bar_tr(:, :), dev_Be_bar_tr(:, :))
+
+        trBe_bar_tr = Be_bar_tr(1, 1) + Be_bar_tr(2, 2) 
+     1              + Be_bar_tr(3, 3)
+      
+        ! WRITE(*,*) 'dev_Be_bar_tr : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) dev_Be_bar_tr(K1, :)
+        ! END DO
+
+        ! Write(*,*) 'trBe_bar_tr : ', trBe_bar_tr
+        
+        
+        
+        !Calculate initial Kirchoff stress dev
+        s_tr(:, :) = mu * dev_Be_bar_tr(:, :)
+
+        DO K1 = 1, 3
+          s_tr_v(K1) = s_tr(K1, K1)
+        END DO
+        s_tr_v(4) = s_tr(1, 2)
+        s_tr_v(5) = s_tr(1, 3)
+        s_tr_v(6) = s_tr(2, 3)
+       
+        ! WRITE(*,*) 's_tr : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) s_tr(K1, :)
+        ! END DO
+
+        ! WRITE(*,*) 's_tr_v : ', s_tr_v(:)
+        
+
+        norm_s_tr = ZERO
+        DO ii = 1, 3
+          DO jj = 1, 3
+            norm_s_tr = norm_s_tr + s_tr(ii, jj) * s_tr(ii, jj)
+          END DO
+        END DO
+        norm_s_tr = norm_s_tr ** (0.5D0)
+
+        IF (norm_s_tr .EQ. ZERO) THEN
+          ret(:) = ZERO
+        ELSE
+          ret(:) = s_tr_v(:) / norm_s_tr
+        END IF
+
+        ! WRITE(*,*) '||s_tr|| : ', norm_s_tr
+
+        ! WRITE(*,*) 'n_n+1 : ', ret(:)
+        
+        p = 0.5D0 * kappa * (J - (ONE / J))
+
+        tau_tr(:, :) = J * p * I_mat(:, :) + s_tr(:, :)
+
+        DO K1 = 1, 3
+          tau_tr_v(K1) = tau_tr(K1, K1)
+        END DO
+        tau_tr_v(4) = tau_tr(1, 2)
+        tau_tr_v(5) = tau_tr(1, 3)
+        tau_tr_v(6) = tau_tr(2, 3)
+
+        mu_bar = mu * (ONE / THREE) * trBe_bar_tr
+        beta0 = ONE + K / (THREE * mu_bar)
+
+        ! write(*,*) 'p : ', p
+
+        ! write(*,*) 'tau_tr: '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) tau_tr(K1, :)
+        ! END DO
+
+        ! write(*,*) 'tau_tr_v: ', tau_tr_v(:)
+
+        !Algorithmic constants for the Tangent
+        
+        ret_mat(1, 1) = ret(1)
+        ret_mat(2, 2) = ret(2)
+        ret_mat(3, 3) = ret(1)
+        ret_mat(1, 2) = ret(4)
+        ret_mat(1, 3) = ret(5)
+        ret_mat(2, 3) = ret(6)
+        ret_mat(2, 1) = ret(4)
+        ret_mat(3, 1) = ret(5)
+        ret_mat(3, 2) = ret(6)
+
+        retsq_mat(:,:) = ZERO
+        DO K1 = 1, 3
+          DO ii = 1, 3
+            DO jj = 1, 3
+                retsq_mat(ii, jj) = retsq_mat(ii, jj) 
+     1                  + ret_mat(ii, K1) * ret_mat(K1, jj)
             END DO
           END DO
         END DO
 
+        CALL dev(retsq_mat(:, :), dev_retsq_mat(:, :))
+        
+        dev_retsq(1) = dev_retsq_mat(1, 1)
+        dev_retsq(2) = dev_retsq_mat(2, 2)
+        dev_retsq(3) = dev_retsq_mat(3, 3)
+        dev_retsq(4) = dev_retsq_mat(1, 2)
+        dev_retsq(5) = dev_retsq_mat(1, 3)
+        dev_retsq(6) = dev_retsq_mat(2, 3)
+
+        ! write(*,*) 'retsq : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) retsq_mat(K1, :)
+        ! END DO
+        ! write(*,*) 'devretsq : '
+        ! DO K1 = 1, 3
+        !   WRITE(*,*) dev_retsq_mat(K1, :)
+        ! END DO
+        ! write(*,*) 'devretsq_v : ', dev_retsq(:)
+
+        
+        
+        BB1(:, :) = ZERO
+        BB2(:, :) = ZERO
+        retoret(:, :) = ZERO
+        BB3(:, :) = ZERO
+        DO ii = 1, 6
+          DO jj = 1, 6
+            BB1(ii, jj) = ret(ii) * I(jj)
+            BB2(ii, jj) = I(ii) * ret(jj)
+            retoret(ii, jj) = ret(ii) * ret(jj)
+            BB3(ii, jj) = ret(ii) * dev_retsq(jj)
+          END DO
+        END DO
+
+        BB4 = ZERO
+        DO ii = 1, 6
+          DO jj = 1, 6
+            BB4(ii, jj) = BB4(ii, jj) 
+     1                  + 0.5D0 * (BB3(ii, jj) + BB3(jj, ii))
+          END DO
+        END DO
+        
         
 
+        c_strike_bar_tr(:, :) = TWO * mu_bar * xpp(:, :) 
+     1      - (TWO / THREE) * norm_s_tr * (BB1(:, :) + BB2(:, :))
+
+        c_strike_tr(:, :) = kappa * (J ** TWO) * xioi(:, :) 
+     2                    - kappa * ((J ** TWO) - ONE) * xii(:, :) 
+     3                    + c_strike_bar_tr(:, :)
+
+        chi_tr = norm_s_tr 
+     1         - ((TWO / THREE) ** (0.5D0)) * (Y0 + K * alpha_n)
+
+
+        ! write(*,*) 'chi_trial : ', chi_tr
+        write(*,*) '----------------------------------'
+        ! IF Yield surface isnt breached (Hyper Elastic Step)
+        IF (chi_tr .LE. ZERO) THEN
+
+          ! Return Cauchy stress 
+          STRESS(:) = tau_tr_v(:) / J
+
+          ! Calculate algorithmic constants for trial state
+
+          
+          beta3 = ONE / beta0
+          beta4 = beta3 * norm_s_tr / mu_bar
+
+          STATEV(1 : 6) = (s_tr_v(:) / mu) 
+     1                  + (trBe_bar_tr/THREE) * I(:)
+
+          c_strike_ep_tr(:, :) = c_strike_tr(:,:) 
+     1                 - TWO * mu_bar * beta3 * retoret(:, :) 
+     2                 - TWO * mu_bar * beta4 * BB4(:, :)
+
+          !Tangent for ABAQUS
+          DO ii = 1, 3
+            DO jj = 1, 3
+              DO ll = 1, 3
+                DO mm = 1, 3
+                  DDSDDE(m2v(ii, jj), m2v(ll, mm))   
+     1        = DDSDDE(m2v(ii, jj), m2v(ll, mm)) 
+     2        + (ONE / J) * (c_strike_ep_tr(m2v(ii,jj), m2v(ll, mm)) 
+     3        + I(m2v(ii, ll)) * tau_tr_v(m2v(jj, mm)) 
+     4        + I(m2v(jj, mm)) * tau_tr_v(m2v(ii, ll)))
+                END DO
+              END DO
+            END DO
+          END DO
+            
+
+        ELSE
+
+          gamma = (chi_tr / (TWO * mu_bar)) / beta0
+
+          s_v = s_tr_v - TWO * mu_bar * gamma * ret(:)
+
+          STATEV(7) = STATEV(7) + ((TWO/THREE) ** (0.5D0)) * gamma
+
+          tau_v(:) = J * p * I(:) + s_v(:)
+
+          STRESS(:) =  tau_v(:) / J
+
+          STATEV(1 : 6) = (s_v(:) / mu) 
+     1                  + (trBe_bar_tr / THREE) * I(:)
+
+
+          beta1 = (TWO * mu_bar * gamma) / norm_s_tr
+          beta2 = (ONE - (ONE / beta0)) 
+     1          * (TWO / THREE) * (norm_s_tr / mu_bar) * gamma
+          beta3 = (ONE / beta0) - beta1 + beta2
+          beta4 = ((ONE / beta0) - beta1) * norm_s_tr / mu_bar
+
+          c_strike_ep(:, :) = c_strike_tr(:, :) 
+     1                      - beta1 * c_strike_bar_tr(:, :) 
+     2                      - TWO * mu_bar * beta3 * retoret(:, :) 
+     3                      - TWO * mu_bar * beta4 * BB4(:, :)
+
+                !Tangent for ABAQUS
+          DO ii = 1, 3
+            DO jj = 1, 3
+              DO ll = 1, 3
+                DO mm = 1, 3
+                  DDSDDE(m2v(ii, jj), m2v(ll, mm))   
+     1        = DDSDDE(m2v(ii, jj), m2v(ll, mm)) 
+     2        + (ONE / J) * (c_strike_ep(m2v(ii,jj), m2v(ll, mm)) 
+     3        + I(m2v(ii, ll)) * tau_v(m2v(jj, mm)) 
+     4        + I(m2v(jj, mm)) * tau_v(m2v(ii, ll)))
+                END DO
+              END DO
+            END DO
+          END DO
+          
+
+        END IF
+     
       RETURN
       END SUBROUTINE FinJ2
 
