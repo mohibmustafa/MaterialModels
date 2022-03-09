@@ -252,25 +252,7 @@ C     !--------------------------------------------------------------
      1         * ((1.D0 - 2.D0 * nu_p) / (nu_p + 1.D0))
 
         k = 1.D0 / (1.D0 + 2.D0 * nu_p ** 2.D0)**(0.5D0)
-        ! WRITE(*, *) "KK_inf", KK_inf
-        ! WRITE(*, *) "KK_1  ", KK_1  
-        ! WRITE(*, *) "k_1   ", k_1   
-        ! WRITE(*, *) "GG_inf", GG_inf
-        ! WRITE(*, *) "GG_1  ", GG_1  
-        ! WRITE(*, *) "g_1   ", g_1   
-        ! WRITE(*, *) "order ", order 
-        ! WRITE(*, *) "m     ", m     
-        ! WRITE(*, *) "alpha ", alpha 
-        ! WRITE(*, *) "nu_p  ", nu_p  
-        ! WRITE(*, *) "eta   ", eta   
-        ! WRITE(*, *) "p_exp ", p_exp 
-        ! WRITE(*, *) "sigma_c0", sigma_c0
-        ! WRITE(*, *) "h_c1    ", h_c1    
-        ! WRITE(*, *) "h_c2    ", h_c2    
-        ! WRITE(*, *) "h_b1    ", h_b1    
-        ! WRITE(*, *) "h_b2    ", h_b2    
-        ! WRITE(*, *) "h_b3    ", h_b3    
-      
+        
         CALL perturb_F(DFGRD1(:, :), F_hat(:, :, :))
 
         !Calculate determinant of deformation gradient
@@ -418,7 +400,7 @@ C     !--------------------------------------------------------------
         
         ! Check for yielding
         WRITE(*,*) "F_tr : ", F_tr
-        IF(F_tr .LE. 9.99D-7) THEN
+        IF(F_tr .LE. 9.99D-6) THEN
           ! Update VE internal variables
           STATEV(10) = B_1
           ! Store A_1 in the statev vector
@@ -1424,7 +1406,7 @@ C     !--------------------------------------------------------------
           REAL(prec), INTENT(INOUT) :: sigma_c, HHc, sigma_t
           REAL(prec), INTENT(INOUT) :: a0, a1, a2, gma_n
 
-          REAL(prec), PARAMETER :: TOLL_G=0.999D-5
+          REAL(prec), PARAMETER :: TOLL_G=0.999D-6
 
           REAL(prec) :: iter_G, etaOverDt, dAdGamma, dDgammaDGamma,Dm
           REAL(prec) :: Da1Dm, H2, H1, H0, dfdDgamma, DfDGamma,Dgamma
@@ -1433,7 +1415,7 @@ C     !--------------------------------------------------------------
           iter_G = 0
 
           DO WHILE (((ABS(F_tr) .GE. TOLL_G) .OR. (iter_G .LT. 1))
-     1        .AND. (iter_G .LE. 100))
+     1        .AND. (iter_G .LE. 250))
               etaOverDt = eta / DTIME
               dAdGamma = -(72.D0 * GG_til * PhiEq * PhiEq /u 
      1         + 16.D0 * KK_til * beta*beta*beta*ptilde*ptilde
@@ -1510,13 +1492,11 @@ C     !--------------------------------------------------------------
 
              iter_G = iter_G + 1
 
-             WRITE(*,*) "Iter : ", iter_G
-             WRITE(*,*) "GAMMA : ", GAMMA
-             WRITE(*,*) "RESI : ", ABS(F_tr)
-             WRITE(*,*) "-------------------------------------------"
+            
 
           END DO
-
-
-
+          WRITE(*,*) "Iter : ", iter_G
+          WRITE(*,*) "GAMMA : ", GAMMA
+          WRITE(*,*) "RESI : ", ABS(F_tr)
+          WRITE(*,*) "-------------------------------------------"
         END SUBROUTINE nlinSolver
