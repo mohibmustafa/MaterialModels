@@ -74,68 +74,57 @@ C     !--------------------------------------------------------------
         REAL(prec), INTENT(OUT)   :: ddsdde(ntens,ntens)
 
         !List of internal variables
-        INTEGER    :: ii, jj, mm, ll, nn, O1, O2, O5, order, iter_G
-        REAL(prec) :: tau_tr(3,3), C_n(3,3), J_n, J, KK_inf, KK_1
-        REAL(prec) :: k_1, GG_inf, GG_1, g_1, KK_e, GG_e, C(3,3)
+        INTEGER    :: ii, jj, mm, ll, O1, O5, order
+        REAL(prec) :: tau_tr(3,3), J_n, J, KK_inf, KK_1
+        REAL(prec) :: k_1, GG_inf, GG_1, g_1, KK_e, GG_e
         REAL(prec) :: E_ve_tr(3,3), E_ve_n(3,3), I_mat(3,3), AA(3,3)
-        REAL(prec) :: A_1_n(3,3), F_hat(6,3,3), J_hat(6), p_tr, beta
+        REAL(prec) :: A_1_n(3,3), F_hat(6,3,3), J_hat(6), beta
         REAL(prec) :: F_vp_n(3,3), B_1_n, C_ve_tr(3,3),kappa_tr(3,3)
-        REAL(prec) :: C_ve_n(3,3), A_1(3,3), F_vp_n_inv(3,3)
-        REAL(prec) :: dev_kappa_tr(3, 3), dev_E_ve_tr(3,3), G_i
-        REAL(prec) :: tr_E_ve_tr, F_ve_tr(3, 3), dfdG, dAdG
+        REAL(prec) :: A_1(3,3), F_ve_tr(3, 3)
         REAL(prec) :: F_ve_tr_hat(6, 3, 3), C_ve_tr_hat(6, 3, 3)
-        REAL(prec) :: E_ve_tr_hat(6, 3, 3), tr_E_ve_tr_hat(6)
-        REAL(prec) :: dev_E_ve_tr_hat(6, 3, 3), p_tr_hat(6)
-        REAL(prec) :: dev_kappa_tr_hat(6, 3, 3), ddelGdG
-        REAL(prec) :: kappa_tr_hat(6, 3, 3), dfdDgamma
+        REAL(prec) :: E_ve_tr_hat(6, 3, 3)
+        REAL(prec) :: kappa_tr_hat(6, 3, 3)
         REAL(prec) :: AA_hat(6, 3, 3), tr_phi_tr_hat(6)
-        REAL(prec) :: C_hat(6, 3, 3), H0, temp7, temp8, temp9, temp10
         REAL(prec) :: tau_tr_hat(6, 3, 3), tau_tr_hat_v(6, 6)
         REAL(prec) :: S_tr(3, 3), S_tr_hat(6, 3, 3)
-        REAL(prec) :: logAA(3, 3), H2, H1, temp11, etaOverDt
+        REAL(prec) :: logAA(3, 3)
         REAL(prec) :: dlogAA(3, 3, 3, 3), ddlogAA(3, 3, 3, 3, 3, 3)
         REAL(prec) :: II_mat(3,3,3,3), temp1(3,3,3,3), temp2(3,3,3,3)
-        REAL(prec) :: DE_ve_tr(3, 3), dev_DE_ve_tr(3, 3), tr_DE_ve_tr
-        REAL(prec) :: dtg, expmdtg, ztag, dtk, expmdtk, ztak, B_1
+        REAL(prec) :: B_1
         REAL(prec) :: logAA_hat(6, 3, 3), dHHbdgma
-        REAL(prec) :: dlogAA_hat(6,3,3,3,3),dDgmaDGamma, Dgma
+        REAL(prec) :: dlogAA_hat(6,3,3,3,3)
         REAL(prec) :: ddlogAA_hat(6, 3, 3, 3, 3, 3, 3)
-        REAL(prec) :: DE_ve_tr_hat(6, 3, 3), tr_DE_ve_tr_hat(6)
-        REAL(prec) :: dev_DE_ve_tr_hat(6, 3, 3), A_1_hat(6, 3, 3)
+        REAL(prec) :: A_1_hat(6, 3, 3)
         REAL(prec) :: B_1_hat(6), phi_tr(3, 3), b_tr(3, 3), phi_p_tr
         REAL(prec) :: dev_phi_tr(3, 3), phi_e_tr, sigma_t, sigma_c
-        REAL(prec) :: m, a0, a1, a2, F_tr, alpha, nu_p, Hb, GAMMA_i
+        REAL(prec) :: m, a0, a1, a2, F_tr, alpha, nu_p
         REAL(prec) :: eta, p_exp, k, sigma_c0, h_c1, h_c2, h_b1
-        REAL(prec) :: phi_p, h_b2, h_b0, HHc, h_cexp
+        REAL(prec) :: h_b2, h_b0, HHc, h_cexp
         REAL(prec) :: dev_phi(3, 3), Q(3, 3), tr_Q, dev_Q(3, 3)
-        REAL(prec) :: p, dev_kappa(3, 3), kappa(3, 3), exp_GQ(3, 3)
-        REAL(prec) :: gma, gma_n, u, v, tr_phi_tr, HHb
-        REAL(prec) :: F_vp(3, 3), exp_GQ_inv(3, 3), C_ve(3, 3)
+        REAL(prec) :: kappa(3, 3), exp_GQ(3, 3)
+        REAL(prec) :: gma_n, u, v, tr_phi_tr, HHb
+        REAL(prec) :: F_vp(3, 3), C_ve(3, 3)
         REAL(prec) :: AA_upd(3, 3), logAA_upd(3, 3), S(3, 3)
         REAL(prec) :: dlogAA_upd(3, 3, 3, 3), E_ve(3, 3), F_ve(3, 3)
         REAL(prec) :: ddlogAA_upd(3, 3, 3, 3, 3, 3), tau(3, 3)
-        REAL(prec) :: tr_E_ve, dev_E_ve(3, 3), DE_ve(3, 3), tr_DE_ve
-        REAL(prec) :: dev_DE_ve(3, 3), b(3, 3), phi_tr_hat(6, 3, 3)
+        REAL(prec) :: b(3, 3), phi_tr_hat(6, 3, 3)
         REAL(prec) :: phi_p_tr_hat(6), dev_phi_tr_hat(6, 3, 3)
         REAL(prec) :: phi_e_tr_hat(6), F_tr_hat(6), u_hat(6),v_hat(6)
-        REAL(prec) :: GAMMA_i_hat(6), phi_p_hat(6), tr_Q_hat(6)
+        REAL(prec) :: tr_Q_hat(6)
         REAL(prec) :: dev_phi_hat(6, 3, 3), Q_hat(6, 3, 3)
-        REAL(prec) :: dev_Q_hat(6, 3, 3), p_hat(6), exp_GQ_hat(6,3,3)
-        REAL(prec) :: dev_kappa_hat(6, 3, 3), kappa_hat(6, 3, 3)
-        REAL(prec) :: F_vp_hat(6, 3, 3), exp_GQ_inv_hat(6,3,3)
+        REAL(prec) :: dev_Q_hat(6, 3, 3), exp_GQ_hat(6,3,3)
+        REAL(prec) :: kappa_hat(6, 3, 3)
+        REAL(prec) :: F_vp_hat(6, 3, 3)
         REAL(prec) :: C_ve_hat(6, 3, 3), AA_upd_hat(6,3,3)
         REAL(prec) :: logAA_upd_hat(6, 3, 3), E_ve_hat(6,3,3)
         REAL(prec) :: dlogAA_upd_hat(6,3,3,3,3), S_hat(6,3,3)
         REAL(prec) :: ddlogAA_upd_hat(6,3,3,3,3,3,3), b_e
-        REAL(prec) :: tr_E_ve_hat(6), dev_E_ve_hat(6, 3, 3)
-        REAL(prec) :: DE_ve_hat(6,3,3), tr_DE_ve_hat(6)
-        REAL(prec) :: dev_DE_ve_hat(6, 3, 3), F_ve_hat(6,3,3)
-        REAL(prec) :: tau_hat(6,3,3), tau_hat_v(6, 6), temp4(3, 3)
-        REAL(prec) :: temp5(3, 3), temp6(3, 3), temp6_hat(6, 3, 3)
-        REAL(prec) :: GAMMA, GG_til, KK_til, A, r_i, temp3, HHt
-        REAL(prec) :: alp1 ,alm1 ,mp1 ,mp1s ,mral ,malm1, mralm1
-        REAL(prec) :: dDgammaDGamma, DfDGamma, dAdGamma, Da1Dm
-        REAL(prec) :: dGamma, ptilde, PhiEq, viscoterm, Dm
+        REAL(prec) :: F_ve_hat(6,3,3)
+        REAL(prec) :: tau_hat(6,3,3), tau_hat_v(6, 6)
+        REAL(prec) :: temp6(3, 3), temp6_hat(6, 3, 3)
+        REAL(prec) :: GAMMA, GG_til, KK_til, A, HHt
+        REAL(prec) :: dDgammaDGamma, DfDGamma
+        REAL(prec) :: ptilde, PhiEq
         REAL(prec) :: F_vp_inv(3, 3), ptilde_hat(6), PhiEq_hat(6)
         REAL(prec) :: GAMMA_hat(6), A_hat(6), F_vp_inv_hat(6, 3, 3)
 
@@ -367,7 +356,7 @@ C     !--------------------------------------------------------------
         F_tr = a2 * PhiEq**alpha  - a1 * ptilde - a0
 
         ! DfDGamma = 0.D0
-        ! dfdDgamma = 0.D0
+        
 
         u = 1.D0
         v = 1.D0
@@ -384,7 +373,6 @@ C     !--------------------------------------------------------------
      1                 - a1 * ptilde_hat(O5) - a0
 
         ! DfDGamma = 0.D0
-        ! dfdDgamma = 0.D0
 
         u_hat(O5) = 1.D0
         v_hat(O5) = 1.D0
@@ -455,7 +443,6 @@ C     !--------------------------------------------------------------
         ELSE
 
           ! VEVP  Here
-          ! iter_G = 0
 
           CALL nlinSolver(F_tr, eta, DTIME, GG_til, PhiEq, u,
      1      KK_til, beta, ptilde, v, A, k, GAMMA, HHt, sigma_c, HHc,
