@@ -327,8 +327,8 @@ C     !--------------------------------------------------------------
         DO O5 = 1, 6
           phi_tr_hat(O5, :, :) = kappa_tr_hat(O5, :,:) - b_tr(:,:)
         
-          CALL tr_dev_split(phi_tr_hat(O5, :,:), dev_phi_tr_hat(O5, :,:),
-     1      tr_phi_tr_hat(O5))
+          CALL tr_dev_split(phi_tr_hat(O5, :,:), 
+     1     dev_phi_tr_hat(O5,:,:), tr_phi_tr_hat(O5))
           phi_p_tr_hat(O5) = tr_phi_tr_hat(O5) / 3.D0
   
           CALL mat2ddot(dev_phi_tr_hat(O5, :, :),
@@ -680,203 +680,11 @@ C     !--------------------------------------------------------------
         RETURN
       END SUBROUTINE matInv
 
-      !--------------------------------------------------------------
-      !      Helper function to compute dev of voit array
-      !--------------------------------------------------------------
-      SUBROUTINE devVoit(array, dev)
-        IMPLICIT NONE
-
-        INTEGER, PARAMETER :: double=kind(1.d0)
-        INTEGER, PARAMETER :: prec=double
-        
-        REAL(prec), INTENT(IN) :: array(6)
-        REAL(prec), INTENT(OUT) :: dev(6)
-
-        dev(1 : 3) = array(1 : 3) 
-     1             - (1.D0/3.D0) * (array(1) + array(2) + array(3))
-
-        dev(4 : 6) = array(4 : 6)
-        RETURN
-      END SUBROUTINE devVoit
+      
 
       !--------------------------------------------------------------
-      !      Helper function to compute dev of voit array
+      !      Helper function to compute tr-dev split of matrix
       !--------------------------------------------------------------
-      SUBROUTINE dev(matrix, out)
-        IMPLICIT NONE
-
-        INTEGER, PARAMETER :: double=kind(1.d0)
-        INTEGER, PARAMETER :: prec=double
-        
-        REAL(prec), INTENT(IN) :: matrix(3, 3)
-        REAL(prec), INTENT(OUT) :: out(3, 3)
-        REAL(prec) :: I_mat(3, 3), tr
-        INTEGER :: K1
-
-        !Define 2nd order identity tensor
-        data I_mat(1,:) /1.D0, 0.D0, 0.D0/
-        data I_mat(2,:) /0.D0, 1.D0, 0.D0/
-        data I_mat(3,:) /0.D0, 0.D0, 1.D0/
-
-        ! write(*,*) '-------- start of dev ----------'
-
-        ! WRITE(*,*) 'matrix : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) matrix(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'I : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) I_mat(K1, :)
-        ! END DO
-
-        tr = matrix(1, 1) + matrix(2, 2) + matrix(3, 3)
-
-        ! WRITE(*,*) 'trace : ', tr
-
-        out(:, :) = matrix(:, :) 
-     1            - (1.D0/3.D0) * tr * I_mat(:, :)
-
-        ! WRITE(*,*) 'dev : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) out(K1, :)
-        ! END DO
-
-        ! write(*,*) '-------- start of dev ----------'
-
-        RETURN
-      END SUBROUTINE dev
-
-
-
-      !--------------------------------------------------------------
-      !      Helper function to compute DEV of voit array
-      !--------------------------------------------------------------
-      SUBROUTINE ddevVoit(array, C, dev)
-        IMPLICIT NONE
-
-        INTEGER, PARAMETER :: double=kind(1.d0)
-        INTEGER, PARAMETER :: prec=double
-        
-        REAL(prec), INTENT(IN) :: array(6), C(6)
-        REAL(prec), INTENT(OUT) :: dev(6)
-        REAL(prec) :: C_mat(3, 3), C_inv_mat(3, 3), m2v(3, 3)
-        REAL(prec) :: C_inv(6), Ctr
-        INTEGER :: K1, K2
-
-        !Declare matrix to voit mapping
-        data m2v/ 1, 4, 5,
-     1            4, 2, 6,
-     2            5, 6, 3/
-
-
-        C_mat(1, 1) = C(1)
-        C_mat(2, 2) = C(2)
-        C_mat(3, 3) = C(3)
-        C_mat(1, 2) = C(4)
-        C_mat(1, 3) = C(5)
-        C_mat(2, 1) = C(4)
-        C_mat(2, 3) = C(6)
-        C_mat(3, 1) = C(5)
-        C_mat(3, 2) = C(6)
-
-        CALL matInv(C_mat, C_inv_mat)
-
-        DO K1 = 1, 3
-          DO K2 = 1, 3
-            C_inv(m2v(K1, K2)) = C_inv_mat(K1, K2)
-          END DO
-        END DO
-
-        Ctr = 0.D0
-        DO K1 = 1, 3
-          DO K2 = 1, 3
-            Ctr = Ctr + array(m2v(K1, K2)) * C(m2v(K1, K2))
-          END DO
-        END DO
-
-        dev(:) = array(:) - (1.D0 / 3.D0) * Ctr * C_inv(:)
-        RETURN
-      END SUBROUTINE ddevVoit
-
-      !--------------------------------------------------------------
-      !      Helper function to compute DEV of matrix
-      !--------------------------------------------------------------
-      SUBROUTINE ddev(matrix, C, dev)
-        IMPLICIT NONE
-
-        INTEGER, PARAMETER :: double=kind(1.d0)
-        INTEGER, PARAMETER :: prec=double
-        
-        REAL(prec), INTENT(IN) :: matrix(3, 3), C(3, 3)
-        REAL(prec), INTENT(OUT) :: dev(3, 3)
-        REAL(prec) :: C_mat(3, 3), C_inv(3, 3), Ctr
-        INTEGER :: ii, jj, kk, ll
-
-        ! WRITE(*,*) '------------ ddev starts here-------------'
-
-        CALL matInv(C, C_inv)
-        
-        ! WRITE(*,*) 'matrix : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) matrix(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'C : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) C(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) 'C_inv : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) C_inv(K1, :)
-        ! END DO
-        
-        Ctr = 0.D0
-        DO ii = 1, 3
-          DO jj = 1, 3
-            Ctr = Ctr + matrix(ii, jj) * C(ii, jj)
-          END DO
-        END DO 
-
-        ! write(*,*) 'Ctr : ', Ctr
-
-        dev(:, :) = matrix(:, :) - (1.D0 / 3.D0) * Ctr * C_inv(:, :)
-
-        ! WRITE(*,*) 'dev : '
-        ! DO K1 = 1, 3
-        !   WRITE(*,*) dev(K1, :)
-        ! END DO
-
-        ! WRITE(*,*) '------------ ddev ends here-------------'
-
-        RETURN
-      END SUBROUTINE ddev
-
-      !--------------------------------------------------------------
-      !      Helper function to compute dev of matrix
-      !--------------------------------------------------------------
-      SUBROUTINE dev_mat(matrix, dev)
-        IMPLICIT NONE
-
-        INTEGER, PARAMETER :: double=kind(1.d0)
-        INTEGER, PARAMETER :: prec=double
-        
-        REAL(prec), INTENT(IN) :: matrix(3, 3)
-        REAL(prec), INTENT(OUT) :: dev(3, 3)
-        REAL(prec) :: mtr, I_mat(3, 3)
-        INTEGER :: ii, jj, kk, ll
-
-        !Define 2nd order identity tensor
-        data I_mat(1,:) /1.D0, 0.D0, 0.D0/
-        data I_mat(2,:) /0.D0, 1.D0, 0.D0/
-        data I_mat(3,:) /0.D0, 0.D0, 1.D0/
-        
-        mtr = matrix(1, 1) + matrix(2, 2) + matrix(3, 3)
-
-        dev(:, :) = matrix(:, :) - (1.D0 / 3.D0) * mtr * I_mat(:, :)
-        RETURN
-      END SUBROUTINE dev_mat
 
       SUBROUTINE tr_dev_split(matrix, dev, tr)
         IMPLICIT NONE
@@ -900,6 +708,10 @@ C     !--------------------------------------------------------------
         RETURN
       END SUBROUTINE tr_dev_split
 
+      !--------------------------------------------------------------
+      !      Function to compute perturb of matrix
+      !--------------------------------------------------------------
+
       SUBROUTINE perturb_F(F, F_hat)
         IMPLICIT NONE
 
@@ -921,8 +733,6 @@ C     !--------------------------------------------------------------
         data I_mat(1,:) /ONE, ZERO, ZERO/
         data I_mat(2,:) /ZERO, ONE, ZERO/
         data I_mat(3,:) /ZERO, ZERO, ONE/
-
-
 
         ! Calculate Perturbation of F
         DD1(:, :, :, :) = ZERO
@@ -969,6 +779,10 @@ C     !--------------------------------------------------------------
         RETURN
 
       END SUBROUTINE perturb_F
+
+      !--------------------------------------------------------------
+      !      Function to compute log of matrix
+      !--------------------------------------------------------------
 
       SUBROUTINE approx_log(AA, order, logAA, dlogAA, ddlogAA)
         IMPLICIT NONE
@@ -1076,6 +890,10 @@ C     !--------------------------------------------------------------
 
       END SUBROUTINE approx_log
 
+      !--------------------------------------------------------------
+      !      Function to compute exp of matrix
+      !--------------------------------------------------------------
+
       SUBROUTINE approx_exp(Q, order, expQ)
         IMPLICIT NONE
         INTEGER, PARAMETER :: double=kind(1.d0)
@@ -1124,6 +942,8 @@ C     !--------------------------------------------------------------
      1     + Q_temp(O5, :, :) / coeffs(O5 - 1)
         END DO
       END SUBROUTINE approx_exp
+
+
 
       SUBROUTINE getC(sigma_c0, h_c1, h_c2, h_cexp, gma, sigma_c,HHc)
         IMPLICIT NONE
@@ -1176,9 +996,6 @@ C     !--------------------------------------------------------------
 
       END SUBROUTINE geta
 
-      
-
-     
 
       SUBROUTINE mat2Tdot(a, b, c)
         IMPLICIT NONE
