@@ -8,7 +8,7 @@
       REAL(prec) :: STRESS(6),STATEV(38)
       REAL(prec) :: DDSDDE(6,6),DDSDDT(6),DRPLDE(6)
       REAL(prec) :: STRAN(6),DSTRAN(6),TIME(2),PREDEF(1),DPRED(1)
-      REAL(prec) :: PROPS(19),DFGRD0(3,3),DFGRD1(3,3),DTIME(1),NTENS(1)
+      REAL(prec) :: PROPS(23),DFGRD0(3,3),DFGRD1(3,3),DTIME(1),NTENS(1)
       REAL(prec) :: NSTATV(1), NPROPS(1), NOEL(1)
 
       STRESS(:) = 0.D0
@@ -33,9 +33,9 @@
 
 
       data PROPS/8000.D0, 0.D0, 2.5D0, 8000.D0,
-     1  0.D0, 2.5D0, 11.D0, 0.78D0, 1.D0,
+     1  0.D0, 2.5D0, 11.D0, 0.0D0, 1.D0,
      2  0.5D0, 0.D0, 0.D0, 100.D0, 300.D0, 0.D0, 0.D0,
-     3  0.D0, 3000.D0, 0.D0/
+     3  0.D0, 3000.D0, 0.D0, 78.D0, 300.D0, 0.D0, 0.D0/
 
       data DFGRD0(:,1) /1.0759999999999998D0,0.D0,
      1       6.9388939039072284D-18/

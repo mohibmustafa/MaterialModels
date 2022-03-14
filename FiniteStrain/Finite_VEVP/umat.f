@@ -119,12 +119,12 @@ C     !--------------------------------------------------------------
         REAL(prec) :: logAA_upd_hat(6, 3, 3), E_ve_hat(6,3,3)
         REAL(prec) :: dlogAA_upd_hat(6,3,3,3,3), S_hat(6,3,3)
         REAL(prec) :: ddlogAA_upd_hat(6,3,3,3,3,3,3), b_e
-        REAL(prec) :: F_ve_hat(6,3,3)
+        REAL(prec) :: F_ve_hat(6,3,3), m_remove
         REAL(prec) :: tau_hat(6,3,3), tau_hat_v(6, 6)
         REAL(prec) :: temp6(3, 3), temp6_hat(6, 3, 3)
         REAL(prec) :: GAMMA, GG_til, KK_til, A, HHt
         REAL(prec) :: dDgammaDGamma, DfDGamma
-        REAL(prec) :: ptilde, PhiEq
+        REAL(prec) :: ptilde, PhiEq, sigma_t0, h_t1, h_t2,  h_texp
         REAL(prec) :: F_vp_inv(3, 3), ptilde_hat(6), PhiEq_hat(6)
         REAL(prec) :: GAMMA_hat(6), A_hat(6), F_vp_inv_hat(6, 3, 3)
 
@@ -220,7 +220,7 @@ C     !--------------------------------------------------------------
         GG_1     =PROPS(5)
         g_1      =PROPS(6)
         order    =PROPS(7)
-        m        =PROPS(8)
+        m_remove =PROPS(8)
         alpha    =PROPS(9)
         nu_p     =PROPS(10)
         eta      =PROPS(11)
@@ -232,6 +232,11 @@ C     !--------------------------------------------------------------
         h_b0     =PROPS(17)
         h_b1     =PROPS(18)
         h_b2     =PROPS(19)
+        sigma_t0 =PROPS(20)
+        h_t1     =PROPS(21)
+        h_t2     =PROPS(22)
+        h_texp   =PROPS(23)
+
 
         !Calculate other derived material parameters
         KK_e = KK_inf + KK_1 * EXP(-DTIME / (TWO * k_1))
@@ -344,9 +349,11 @@ C     !--------------------------------------------------------------
         END DO
 
         CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma_n, sigma_c,HHc)
-        sigma_t = m * sigma_c
-        HHt = HHc
-        CALL geta(alpha, m, sigma_c, a0, a1, a2)
+        CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma_n, sigma_t,HHt)
+
+        ! sigma_t = m * sigma_c
+        ! HHt = HHc
+        CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
         
         CALL getB(h_b0, h_b1, h_b2, gma_n, b_e, HHb, dHHbdgma)
 
@@ -448,7 +455,7 @@ C     !--------------------------------------------------------------
      1      KK_til, beta, ptilde, v, A, k, GAMMA, HHt, sigma_c, HHc,
      2    sigma_t, alpha, m, a0, a1, a2, p_exp, gma_n, sigma_c0,
      3    h_c1, h_c2, h_cexp, h_b0, h_b1, h_b2, GG_e, KK_e, phi_e_tr,
-     4    phi_p_tr)
+     4    phi_p_tr, sigma_t0, h_t1, h_t2, h_texp)
 
           dev_phi(:,:) = dev_phi_tr(:,:) / u
           ptilde = phi_p_tr / v
@@ -537,7 +544,8 @@ C     !--------------------------------------------------------------
      2        v_hat(O5), A_hat(O5), k, GAMMA_hat(O5), HHt, sigma_c,
      3        HHc, sigma_t, alpha, m, a0, a1, a2, p_exp, gma_n,
      4        sigma_c0, h_c1, h_c2, h_cexp, h_b0, h_b1, h_b2, GG_e,
-     5        KK_e, phi_e_tr_hat(O5), phi_p_tr_hat(O5))
+     5        KK_e, phi_e_tr_hat(O5), phi_p_tr_hat(O5), sigma_t0,
+     6        h_t1, h_t2, h_texp)
 
             
             dev_phi_hat(O5,:,:) = dev_phi_tr_hat(O5,:,:) / u_hat(O5)
@@ -974,15 +982,18 @@ C     !--------------------------------------------------------------
         dHHbdgma = 0.D0
       END SUBROUTINE getB
 
-      SUBROUTINE geta(alpha, m, sigma_c, a0, a1, a2)
+      SUBROUTINE geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
         IMPLICIT NONE
         INTEGER, PARAMETER :: double=kind(1.D0)
         INTEGER, PARAMETER :: prec=double
 
-        REAL(prec), INTENT(IN) :: alpha, m, sigma_c
-        REAL(prec), INTENT(OUT) :: a0, a1, a2
+        REAL(prec), INTENT(IN) :: alpha, sigma_c, sigma_t
+        REAL(prec), INTENT(OUT) ::  a0, a1, a2
+        REAL(prec), INTENT(INOUT) :: m
 
         REAL(prec) :: mral, mp1, sigcral
+
+        m = sigma_t / sigma_c
 
         mral = m**alpha
         mp1 = m + 1.D0
@@ -1195,28 +1206,31 @@ C     !--------------------------------------------------------------
      1      KK_til, beta, ptilde, v, A, k, GAMMA, HHt, sigma_c, HHc,
      2    sigma_t, alpha, m, a0, a1, a2, p_exp, gma_n, sigma_c0,
      3    h_c1, h_c2, h_cexp, h_b0, h_b1, h_b2, GG_e, KK_e, phi_e_tr,
-     4    phi_p_tr)
+     4    phi_p_tr, sigma_t0, h_t1, h_t2, h_texp)
           
           IMPLICIT NONE
           INTEGER, PARAMETER :: double=kind(1.d0)
           INTEGER, PARAMETER :: prec=double
 
-          REAL(prec), INTENT(IN)    :: eta, DTIME, beta, k, alpha, m
+          REAL(prec), INTENT(IN)    :: eta, DTIME, beta, k, alpha
           REAL(prec), INTENT(IN)    :: p_exp, sigma_c0, h_c1, h_c2
           REAL(prec), INTENT(IN)    :: h_cexp, h_b0, h_b1, h_b2
           REAL(prec), INTENT(IN)    :: GG_e, KK_e, phi_e_tr, phi_p_tr
+          REAL(prec), INTENT(IN)    :: sigma_t0, h_t1, h_t2, h_texp
           REAL(prec), INTENT(INOUT) :: F_tr, GG_til, PhiEq, u, KK_til
           REAL(prec), INTENT(INOUT) :: ptilde, v, A, GAMMA, HHt
           REAL(prec), INTENT(INOUT) :: sigma_c, HHc, sigma_t
-          REAL(prec), INTENT(INOUT) :: a0, a1, a2, gma_n
+          REAL(prec), INTENT(INOUT) :: a0, a1, a2, gma_n, m
 
           REAL(prec), PARAMETER :: TOLL_G=0.999D-6
 
           REAL(prec) :: iter_G, etaOverDt, dAdGamma, dDgammaDGamma,Dm
           REAL(prec) :: Da1Dm, H2, H1, H0, dfdDgamma, DfDGamma,Dgamma
-          REAL(prec) :: b_e, HHb, dHHbdgma, viscoterm
+          REAL(prec) :: b_e, HHb, dHHbdgma, viscoterm, gma
 
           iter_G = 0
+
+          gma=gma_n
 
           DO WHILE (((ABS(F_tr) .GE. TOLL_G) .OR. (iter_G .LT. 1))
      1        .AND. (iter_G .LE. 250))
@@ -1274,14 +1288,15 @@ C     !--------------------------------------------------------------
 
              Dgamma = k * GAMMA * A
 
-             gma_n = gma_n + Dgamma
+             gma = gma_n + Dgamma
 
-             CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma_n, sigma_c,HHc)
-             sigma_t = m * sigma_c
-             HHt = HHc
-             CALL geta(alpha, m, sigma_c, a0, a1, a2)
+          CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma, sigma_c,HHc)
+          CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma, sigma_t,HHt)
+            !  sigma_t = m * sigma_c
+            !  HHt = HHc
+             CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
             
-             CALL getB(h_b0, h_b1, h_b2, gma_n, b_e, HHb, dHHbdgma)
+             CALL getB(h_b0, h_b1, h_b2, gma, b_e, HHb, dHHbdgma)
 
              GG_til = GG_e + (k/2.D0)*HHb
              KK_til = KK_e + (k/3.D0)*HHb
@@ -1296,9 +1311,10 @@ C     !--------------------------------------------------------------
 
              iter_G = iter_G + 1
 
-            
-
           END DO
+          
+          gma_n = gma
+
           WRITE(*,*) "Iter : ", iter_G
           WRITE(*,*) "GAMMA : ", GAMMA
           WRITE(*,*) "RESI : ", ABS(F_tr)
