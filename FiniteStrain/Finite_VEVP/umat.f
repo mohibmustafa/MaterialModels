@@ -119,7 +119,7 @@ C     !--------------------------------------------------------------
         REAL(prec) :: logAA_upd_hat(6, 3, 3), E_ve_hat(6,3,3)
         REAL(prec) :: dlogAA_upd_hat(6,3,3,3,3), S_hat(6,3,3)
         REAL(prec) :: ddlogAA_upd_hat(6,3,3,3,3,3,3), b_e
-        REAL(prec) :: F_ve_hat(6,3,3), m_remove
+        REAL(prec) :: F_ve_hat(6,3,3)
         REAL(prec) :: tau_hat(6,3,3), tau_hat_v(6, 6)
         REAL(prec) :: temp6(3, 3), temp6_hat(6, 3, 3)
         REAL(prec) :: GAMMA, GG_til, KK_til, A, HHt
@@ -220,22 +220,23 @@ C     !--------------------------------------------------------------
         GG_1     =PROPS(5)
         g_1      =PROPS(6)
         order    =PROPS(7)
-        m_remove =PROPS(8)
-        alpha    =PROPS(9)
-        nu_p     =PROPS(10)
-        eta      =PROPS(11)
-        p_exp    =PROPS(12)
-        sigma_c0 =PROPS(13)
-        h_c1     =PROPS(14)
-        h_c2     =PROPS(15)
-        h_cexp   =PROPS(16)
-        h_b0     =PROPS(17)
-        h_b1     =PROPS(18)
-        h_b2     =PROPS(19)
-        sigma_t0 =PROPS(20)
-        h_t1     =PROPS(21)
-        h_t2     =PROPS(22)
-        h_texp   =PROPS(23)
+        alpha    =PROPS(8)
+        
+        nu_p     =PROPS(9)
+        eta      =PROPS(10)
+        p_exp    =PROPS(11)
+        sigma_c0 =PROPS(12)
+        h_c1     =PROPS(13)
+        h_c2     =PROPS(14)
+        h_cexp   =PROPS(15)
+        h_b0     =PROPS(16)
+
+        h_b1     =PROPS(17)
+        h_b2     =PROPS(18)
+        sigma_t0 =PROPS(19)
+        h_t1     =PROPS(20)
+        h_t2     =PROPS(21)
+        h_texp   =PROPS(22)
 
 
         !Calculate other derived material parameters
