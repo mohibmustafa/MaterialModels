@@ -1226,8 +1226,8 @@ C     !--------------------------------------------------------------
           REAL(prec), PARAMETER :: TOLL_G=0.999D-6
 
           REAL(prec) :: iter_G, etaOverDt, dAdGamma, dDgammaDGamma,Dm
-          REAL(prec) :: Da1Dm, H2, H1, H0, dfdDgamma, DfDGamma,Dgamma
-          REAL(prec) :: b_e, HHb, dHHbdgma, viscoterm, gma
+          REAL(prec) :: Da1Dm, H2, H1, H0, dfdDgma, DfDGamma,Dgma
+          REAL(prec) :: b_e, HHb, dHHbdgma, viscoterm, gma, dGamma
 
           iter_G = 0
 
@@ -1257,9 +1257,9 @@ C     !--------------------------------------------------------------
               H0 =((alpha * (m**(alpha - 1.D0)) + 1.D0) / (m + 1.D0) 
      1            - (((m**alpha) + m)/(m + 1.D0))/(m + 1.D0))*Dm
 
-              dfdDgamma = H2 * (PhiEq**alpha) -H1*ptilde - H0
+              dfdDgma = H2 * (PhiEq**alpha) -H1*ptilde - H0
 
-              DfDGamma = (dfdDgamma * dDgammaDGamma) 
+              DfDGamma = (dfdDgma * dDgammaDGamma) 
      1       - (alpha * a2 * 6.D0 * GG_til) * (PhiEq**alpha) / u
      2       + a1 * ptilde * 2.D0 * beta * KK_til / v
 
@@ -1274,7 +1274,7 @@ C     !--------------------------------------------------------------
                 GAMMA = GAMMA / 2.D0
 
               ELSE
-                GAMMA = GAMMA + dGAMMA
+                GAMMA = GAMMA + dGamma
               END IF
             
               u = 1.D0 + 6.D0 * GG_til * GAMMA
@@ -1287,9 +1287,9 @@ C     !--------------------------------------------------------------
      1         + (4.D0 / 3.D0) * (beta**2.D0) 
      2         * (ptilde ** 2.D0)) ** 0.5D0
 
-             Dgamma = k * GAMMA * A
+             Dgma = k * GAMMA * A
 
-             gma = gma_n + Dgamma
+             gma = gma_n + Dgma
 
           CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma, sigma_c,HHc)
           CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma, sigma_t,HHt)

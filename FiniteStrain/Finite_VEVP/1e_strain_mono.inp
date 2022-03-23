@@ -27,7 +27,7 @@
 *MATERIAL,NAME=U1
 *USER MATERIAL,TYPE=mechanical,constants=22
 **KK_inf, KK_1, k_1, GG_inf,   GG_1, g_1, order, alpha,     nu_p, eta, p_exp, sigma_c0, h_c1 ,h_c2 ,h_b1 ,h_b2 ,h_b3    
-8000.0, 0.0, 2.5, 8000.0, 0.1, 2.5, 11, 1.0,
+8000.0, 0.0, 2.5, 8000.0, 0.0, 2.5, 11, 1.0,
 0.5, 0.0, 0.0, 100.0, 300.0, 0.0, 0.0, 0.0,
 3000.0, 0.0, 78.0, 300.0, 0.0, 0.0
 *DEPVAR
