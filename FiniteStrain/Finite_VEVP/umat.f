@@ -127,6 +127,10 @@ C     !--------------------------------------------------------------
         REAL(prec) :: ptilde, PhiEq, sigma_t0, h_t1, h_t2,  h_texp
         REAL(prec) :: F_vp_inv(3, 3), ptilde_hat(6), PhiEq_hat(6)
         REAL(prec) :: GAMMA_hat(6), A_hat(6), F_vp_inv_hat(6, 3, 3)
+        REAL(prec) :: KK_2, k_2, KK_3, k_3, GG_2, g_2, GG_3, g_3
+        REAL(prec) :: A_2_n(3, 3), A_3_n(3, 3), B_2_n, B_3_n, A_2(3, 3)
+        REAL(prec) :: B_2, A_3(3,3), B_3, A_2_hat(6,3,3), B_2_hat(6)
+        REAL(prec) :: A_3_hat(6,3,3), B_3_hat(6)
 
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
@@ -212,6 +216,31 @@ C     !--------------------------------------------------------------
 
         gma_n = STATEV(38)
 
+        A_2_n(1, 1) = STATEV(39)
+        A_2_n(2, 2) = STATEV(40)
+        A_2_n(3, 3) = STATEV(41)
+        A_2_n(1, 2) = STATEV(42)
+        A_2_n(1, 3) = STATEV(43)
+        A_2_n(2, 3) = STATEV(44)
+        A_2_n(2, 1) = STATEV(45)
+        A_2_n(3, 1) = STATEV(46)
+        A_2_n(3, 2) = STATEV(47)
+
+        A_3_n(1, 1) = STATEV(48)
+        A_3_n(2, 2) = STATEV(49)
+        A_3_n(3, 3) = STATEV(50)
+        A_3_n(1, 2) = STATEV(51)
+        A_3_n(1, 3) = STATEV(52)
+        A_3_n(2, 3) = STATEV(53)
+        A_3_n(2, 1) = STATEV(54)
+        A_3_n(3, 1) = STATEV(55)
+        A_3_n(3, 2) = STATEV(56)
+
+        B_2_n = STATEV(57)
+        B_3_n = STATEV(58)
+
+
+
         !Get material properties
         KK_inf   =PROPS(1)
         KK_1     =PROPS(2)
@@ -237,11 +266,25 @@ C     !--------------------------------------------------------------
         h_t1     =PROPS(20)
         h_t2     =PROPS(21)
         h_texp   =PROPS(22)
+        KK_2     =PROPS(23)     
+        k_2      =PROPS(24)
+
+        KK_3     =PROPS(25)   
+        k_3      =PROPS(26)
+        GG_2     =PROPS(27)  
+        g_2      =PROPS(28)    
+        GG_3     =PROPS(29)   
+        g_3      =PROPS(30)  
 
 
         !Calculate other derived material parameters
-        KK_e = KK_inf + KK_1 * EXP(-DTIME / (TWO * k_1))
-        GG_e = GG_inf + GG_1 * EXP(-DTIME / (TWO * g_1))
+        KK_e = KK_inf + KK_1 * EXP(-DTIME / (TWO * k_1)) 
+     1       + KK_2 * EXP(-DTIME / (TWO * k_2)) 
+     2       + KK_3 * EXP(-DTIME / (TWO * k_3))
+
+        GG_e = GG_inf + GG_1 * EXP(-DTIME / (TWO * g_1)) 
+     1       + GG_2 * EXP(-DTIME / (TWO * g_2))
+     2       + GG_3 * EXP(-DTIME / (TWO * g_3))
 
         beta = (9.D0 / 2.D0) 
      1         * ((1.D0 - 2.D0 * nu_p) / (nu_p + 1.D0))
@@ -281,13 +324,19 @@ C     !--------------------------------------------------------------
 
        CALL vePredictor_log(E_ve_tr(:,:), E_ve_n(:, :), A_1_n(:,:),
      1   B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1, k_1,
-     2   kappa_tr(:, :), A_1(:, :), B_1)
+     2   kappa_tr(:, :), A_1(:, :), B_1, A_2_n(:,:), A_3_n(:,:),
+     3   B_2_n, B_3_n, A_2(:,:), B_2, A_3(:,:), B_3, g_2, g_3, GG_2,
+     4   GG_3, KK_2, KK_3, k_2, k_3)
+
+     
 
        DO O5  = 1, 6
         CALL vePredictor_log(E_ve_tr_hat(O5,:,:), E_ve_n(:, :)
      1   , A_1_n(:,:), B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1
      2   , k_1, kappa_tr_hat(O5, :, :), A_1_hat(O5, :, :)
-     3   , B_1_hat(O5))
+     3   , B_1_hat(O5), A_2_n(:,:), A_3_n(:,:), B_2_n, B_3_n,
+     4    A_2_hat(O5, :,:), B_2_hat(O5), A_3_hat(O5, :,:),B_3_hat(O5),
+     5    g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3)
        END DO
 
        
@@ -410,6 +459,29 @@ C     !--------------------------------------------------------------
           STATEV(18) = A_1(3, 1)
           STATEV(19) = A_1(3, 2)
 
+          STATEV(39) = A_2(1, 1)
+          STATEV(40) = A_2(2, 2)
+          STATEV(41) = A_2(3, 3)
+          STATEV(42) = A_2(1, 2)
+          STATEV(43) = A_2(1, 3)
+          STATEV(44) = A_2(2, 3)
+          STATEV(45) = A_2(2, 1)
+          STATEV(46) = A_2(3, 1)
+          STATEV(47) = A_2(3, 2)
+          STATEV(48) = A_3(1, 1)
+          STATEV(49) = A_3(2, 2)
+          STATEV(50) = A_3(3, 3)
+          STATEV(51) = A_3(1, 2)
+          STATEV(52) = A_3(1, 3)
+          STATEV(53) = A_3(2, 3)
+          STATEV(54) = A_3(2, 1)
+          STATEV(55) = A_3(3, 1)
+          STATEV(56) = A_3(3, 2)
+
+          STATEV(57) = B_2
+          STATEV(58) = B_3
+
+
           ! Store E_ve in the statev vector
           STATEV(20) = E_ve_tr(1, 1)
           STATEV(21) = E_ve_tr(2, 2)
@@ -447,6 +519,12 @@ C     !--------------------------------------------------------------
      1                     *  (tau_tr_hat_v(jj, ii) - J*STRESS(ii)) 
             END DO
           END DO
+
+          WRITE(*,*) "Tangent"
+          DO ii = 1, 6
+            WRITE(*,*) DDSDDE(ii, :)
+          END DO
+
 
         ELSE
 
@@ -487,7 +565,9 @@ C     !--------------------------------------------------------------
 
           CALL vePredictor_log(E_ve(:,:), E_ve_n(:, :), A_1_n(:,:),
      1   B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1, k_1,
-     2   kappa(:, :), A_1(:, :), B_1)
+     2   kappa(:, :), A_1(:, :), B_1, A_2_n(:,:), A_3_n(:,:),
+     3   B_2_n, B_3_n, A_2(:,:), B_2, A_3(:,:), B_3, g_2, g_3, GG_2,
+     4   GG_3, KK_2, KK_3, k_2, k_3)
 
           STATEV(1) = F_vp(1, 1)
           STATEV(2) = F_vp(2, 2)
@@ -509,6 +589,29 @@ C     !--------------------------------------------------------------
           STATEV(17) = A_1(2, 1)
           STATEV(18) = A_1(3, 1)
           STATEV(19) = A_1(3, 2)
+
+          STATEV(39) = A_2(1, 1)
+          STATEV(40) = A_2(2, 2)
+          STATEV(41) = A_2(3, 3)
+          STATEV(42) = A_2(1, 2)
+          STATEV(43) = A_2(1, 3)
+          STATEV(44) = A_2(2, 3)
+          STATEV(45) = A_2(2, 1)
+          STATEV(46) = A_2(3, 1)
+          STATEV(47) = A_2(3, 2)
+          STATEV(48) = A_3(1, 1)
+          STATEV(49) = A_3(2, 2)
+          STATEV(50) = A_3(3, 3)
+          STATEV(51) = A_3(1, 2)
+          STATEV(52) = A_3(1, 3)
+          STATEV(53) = A_3(2, 3)
+          STATEV(54) = A_3(2, 1)
+          STATEV(55) = A_3(3, 1)
+          STATEV(56) = A_3(3, 2)
+
+          STATEV(57) = B_2
+          STATEV(58) = B_3
+
 
           STATEV(20) = E_ve(1, 1)
           STATEV(21) = E_ve(2, 2)
@@ -580,9 +683,13 @@ C     !--------------------------------------------------------------
 
             E_ve_hat(O5,:,:) = 0.5D0 * logAA_upd_hat(O5,:,:)
 
-            CALL vePredictor_log(E_ve_hat(O5,:,:), E_ve_n(:, :),
-     1        A_1_n(:,:), B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf,
-     2        KK_1, k_1, kappa_hat(O5, :, :), A_1(:, :), B_1)
+           CALL vePredictor_log(E_ve_hat(O5,:,:), E_ve_n(:, :)
+     1   , A_1_n(:,:), B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1
+     2   , k_1, kappa_hat(O5, :, :), A_1_hat(O5, :, :)
+     3   , B_1_hat(O5), A_2_n(:,:), A_3_n(:,:), B_2_n, B_3_n,
+     4    A_2_hat(O5, :,:), B_2_hat(O5), A_3_hat(O5, :,:),B_3_hat(O5),
+     5   g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3)
+       
 
             ! Calculate S as per Ludovic's paper
             CALL mat24ddot(kappa_hat(O5, :, :),
@@ -736,7 +843,7 @@ C     !--------------------------------------------------------------
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
         REAL(prec), PARAMETER :: THREE=3.D0, FOUR= 4.D0, SIX=6.D0
-        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.001D0
+        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.001D0 
 
         !Define 4th order identity tensor
         data I_mat(1,:) /ONE, ZERO, ZERO/
@@ -1149,23 +1256,30 @@ C     !--------------------------------------------------------------
 
       END SUBROUTINE vevpSplit
 
-      SUBROUTINE vePredictor_log(E_ve, E_ve_n, Ai_n, Bi_n,
-     1    dt, GGinf, GG1, g1, KKinf, KK1, k1, kappa, Ai, Bi)
+      SUBROUTINE vePredictor_log(E_ve, E_ve_n, A1_n, B1_n,
+     1    dt, GGinf, GG1, g1, KKinf, KK1, k1, kappa, A1, B1,
+     2    A2_n, A3_n, B2_n, B3_n, A2, B2, A3, B3, g2, g3, GG2, GG3,
+     3    KK2, KK3, k2, k3)
 
          IMPLICIT NONE
         INTEGER, PARAMETER :: double=kind(1.d0)
         INTEGER, PARAMETER :: prec=double
 
         REAL(prec), INTENT(IN)  :: E_ve(3, 3), E_ve_n(3, 3)
-        REAL(prec), INTENT(IN)  :: Ai_n(3, 3), Bi_n, dt, GG1
+        REAL(prec), INTENT(IN)  :: A1_n(3, 3), B1_n, dt, GG1
         REAL(prec), INTENT(IN)  :: g1, KK1, k1, GGinf, KKinf
-        REAL(prec), INTENT(OUT) :: kappa(3, 3), Ai(3, 3), Bi
+        REAL(prec), INTENT(IN)  :: A2_n(3, 3), A3_n(3, 3), B2_n, B3_n
+        REAL(prec), INTENT(IN)  :: g2, g3, GG2, GG3, k2, k3, KK2, KK3
+        REAL(prec), INTENT(OUT) :: kappa(3, 3), A1(3, 3), B1
+        REAL(prec), INTENT(OUT) :: A2(3, 3), B2, A3(3, 3), B3
 
         INTEGER  :: O1, ii, jj
         REAL(prec) :: dev_E_ve(3, 3), tr_E_ve, DE_ve(3, 3)
-        REAL(prec) :: dev_DE_ve(3, 3), tr_DE_ve, dtg, expmdtg, ztag
-        REAL(prec) :: dtk, expmdtk, ztak, dev_kappa(3, 3), GGe, KKe
-        REAL(prec) :: p, I_mat(3, 3)
+        REAL(prec) :: dev_DE_ve(3, 3), tr_DE_ve, dtg1, expmdtg1, ztag1
+        REAL(prec) :: dtk1, expmdtk1, ztak1, dev_kappa(3, 3), GGe,KKe
+        REAL(prec) :: p, I_mat(3, 3), dtg2, expmdtg2, ztag2, dtg3
+        REAL(prec) :: expmdtg3, ztag3, dtk2, dtk3, expmdtk2, expmdtk3
+        REAL(prec) :: ztak2, ztak3
 
         !Define 2nd order identity tensor
         data I_mat(1,:) /1.D0, 0.D0, 0.D0/
@@ -1177,27 +1291,58 @@ C     !--------------------------------------------------------------
         DE_ve(:, :) = E_ve(:, :) - E_ve_n(:, :)
         CALL tr_dev_split(DE_ve(:,:), dev_DE_ve(:,:), tr_DE_ve)
 
-         dtg = dt / g1
-         expmdtg = EXP(-dtg)
-         ztag = EXP(-dtg/2.D0)
-         GGe = GGinf + GG1 * EXP(-dt / (2.D0 * g1))
+         dtg1 = dt / g1
+         expmdtg1 = EXP(-dtg1)
+         ztag1 = EXP(-dtg1/2.D0)
+
+         dtg2 = dt / g2
+         expmdtg2 = EXP(-dtg2)
+         ztag2 = EXP(-dtg2/2.D0)
+
+         dtg3 = dt / g3
+         expmdtg3 = EXP(-dtg3)
+         ztag3 = EXP(-dtg3/2.D0)
+
+
+         GGe = GGinf + GG1 * ztag1 + GG2 * ztag2 + GG3 * ztag3
 
     !      Ai(:,:) = expmdtg*Ai_n(:, :) 
     !  1           + 2.D0 * GG1 * ztag * dev_DE_ve(:, :)
-         Ai(:,:) = expmdtg*Ai_n(:, :) 
-     1           + ztag * dev_DE_ve(:, :)
+         A1(:,:) = expmdtg1*A1_n(:, :) 
+     1           + ztag1 * dev_DE_ve(:, :)
+
+         A2(:,:) = expmdtg2*A2_n(:, :) 
+     1           + ztag2 * dev_DE_ve(:, :)
+
+         A3(:,:) = expmdtg3*A3_n(:, :) 
+     1           + ztag3 * dev_DE_ve(:, :)
+        
          
-         dtk = dt / k1
-         expmdtk = EXP(-dtk)
-         ztak = exp(-dtk/2.D0)
-         KKe = KKinf + KK1 * EXP(-dt / (2.D0 * k1))
+         dtk1 = dt / k1
+         expmdtk1 = EXP(-dtk1)
+         ztak1 = exp(-dtk1/2.D0)
+
+         dtk2 = dt / k2
+         expmdtk2 = EXP(-dtk2)
+         ztak2 = exp(-dtk2/2.D0)
+
+         dtk3 = dt / k3
+         expmdtk3 = EXP(-dtk3)
+         ztak3 = exp(-dtk3/2.D0)
+
+         KKe = KKinf + KK1 * ztak1 + KK2 * ztak2 + KK3 * ztak3 
 
         !  Bi = Bi_n * expmdtk + KK1 * ztak * tr_DE_ve
-         Bi = Bi_n * expmdtk + ztak * tr_DE_ve
+         B1 = B1_n * expmdtk1 + ztak1 * tr_DE_ve
+         B2 = B2_n * expmdtk2 + ztak2 * tr_DE_ve
+         B3 = B3_n * expmdtk3 + ztak3 * tr_DE_ve
 
          dev_kappa(:, :) = dev_E_ve(:, :) * 2.D0 * GGinf 
-     1                   + 2 * GG1 * Ai(:, :)
-         p = tr_E_ve * KKinf + Bi * KK1
+     1                   + 2.D0 * GG1 * A1(:, :) 
+     2                   + 2.D0 * GG2 * A2(:, :) 
+     3                   + 2.D0 * GG3 * A3(:, :)
+
+         p = tr_E_ve * KKinf + B1 * KK1 + B2 * KK2 + B3 * KK3
          kappa(:, :) = dev_kappa(:, :) + p * I_mat(:, :)
 
         END SUBROUTINE vePredictor_log
@@ -1223,7 +1368,7 @@ C     !--------------------------------------------------------------
           REAL(prec), INTENT(INOUT) :: sigma_c, HHc, sigma_t
           REAL(prec), INTENT(INOUT) :: a0, a1, a2, gma_n, m
 
-          REAL(prec), PARAMETER :: TOLL_G=0.999D-6
+          REAL(prec), PARAMETER :: TOLL_G=0.999D-7
 
           REAL(prec) :: iter_G, etaOverDt, dAdGamma, dDgammaDGamma,Dm
           REAL(prec) :: Da1Dm, H2, H1, H0, dfdDgma, DfDGamma,Dgma
@@ -1234,7 +1379,7 @@ C     !--------------------------------------------------------------
           gma=gma_n
 
           DO WHILE (((ABS(F_tr) .GE. TOLL_G) .OR. (iter_G .LT. 1))
-     1        .AND. (iter_G .LE. 250))
+     1        .AND. (iter_G .LE. 300))
               etaOverDt = eta / DTIME
               dAdGamma = -(72.D0 * GG_til * PhiEq * PhiEq /u 
      1         + 16.D0 * KK_til * beta*beta*beta*ptilde*ptilde
