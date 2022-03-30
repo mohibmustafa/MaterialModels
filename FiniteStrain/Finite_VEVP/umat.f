@@ -75,7 +75,7 @@ C     !--------------------------------------------------------------
 
         !List of internal variables
         INTEGER    :: ii, jj, mm, ll, O1, O5, order
-        REAL(prec) :: tau_tr(3,3), J_n, J, KK_inf, KK_1
+        REAL(prec) :: tau_tr(3,3), J, KK_inf, KK_1
         REAL(prec) :: k_1, GG_inf, GG_1, g_1, KK_e, GG_e
         REAL(prec) :: E_ve_tr(3,3), E_ve_n(3,3), I_mat(3,3), AA(3,3)
         REAL(prec) :: A_1_n(3,3), F_hat(6,3,3), J_hat(6), beta
@@ -90,8 +90,7 @@ C     !--------------------------------------------------------------
         REAL(prec) :: logAA(3, 3)
         REAL(prec) :: dlogAA(3, 3, 3, 3), ddlogAA(3, 3, 3, 3, 3, 3)
         REAL(prec) :: II_mat(3,3,3,3), temp1(3,3,3,3), temp2(3,3,3,3)
-        REAL(prec) :: B_1
-        REAL(prec) :: logAA_hat(6, 3, 3), dHHbdgma
+        REAL(prec) :: B_1, logAA_hat(6, 3, 3), dHHbdgma
         REAL(prec) :: dlogAA_hat(6,3,3,3,3)
         REAL(prec) :: ddlogAA_hat(6, 3, 3, 3, 3, 3, 3)
         REAL(prec) :: A_1_hat(6, 3, 3)
@@ -123,7 +122,6 @@ C     !--------------------------------------------------------------
         REAL(prec) :: tau_hat(6,3,3), tau_hat_v(6, 6)
         REAL(prec) :: temp6(3, 3), temp6_hat(6, 3, 3)
         REAL(prec) :: GAMMA, GG_til, KK_til, A, HHt
-        REAL(prec) :: dDgammaDGamma, DfDGamma
         REAL(prec) :: ptilde, PhiEq, sigma_t0, h_t1, h_t2,  h_texp
         REAL(prec) :: F_vp_inv(3, 3), ptilde_hat(6), PhiEq_hat(6)
         REAL(prec) :: GAMMA_hat(6), A_hat(6), F_vp_inv_hat(6, 3, 3)
@@ -277,14 +275,14 @@ C     !--------------------------------------------------------------
         g_3      =PROPS(30)  
 
 
-        !Calculate other derived material parameters
-        KK_e = KK_inf + KK_1 * EXP(-DTIME / (TWO * k_1)) 
-     1       + KK_2 * EXP(-DTIME / (TWO * k_2)) 
-     2       + KK_3 * EXP(-DTIME / (TWO * k_3))
+    !     !Calculate other derived material parameters
+    !     KK_e = KK_inf + KK_1 * EXP(-DTIME / (TWO * k_1)) 
+    !  1       + KK_2 * EXP(-DTIME / (TWO * k_2)) 
+    !  2       + KK_3 * EXP(-DTIME / (TWO * k_3))
 
-        GG_e = GG_inf + GG_1 * EXP(-DTIME / (TWO * g_1)) 
-     1       + GG_2 * EXP(-DTIME / (TWO * g_2))
-     2       + GG_3 * EXP(-DTIME / (TWO * g_3))
+    !     GG_e = GG_inf + GG_1 * EXP(-DTIME / (TWO * g_1)) 
+    !  1       + GG_2 * EXP(-DTIME / (TWO * g_2))
+    !  2       + GG_3 * EXP(-DTIME / (TWO * g_3))
 
         beta = (9.D0 / 2.D0) 
      1         * ((1.D0 - 2.D0 * nu_p) / (nu_p + 1.D0))
@@ -295,11 +293,11 @@ C     !--------------------------------------------------------------
 
         !Calculate determinant of deformation gradient
         J = determinant(DFGRD1(:,:))
-        J_n = determinant(DFGRD0(:,:))
+        !J_n = determinant(DFGRD0(:,:))
 
         J_hat(:) = ZERO
-        DO O1 = 1, 6
-          J_hat(O1) = determinant(F_hat(O1, :, :))
+        DO O5 = 1, 6
+          J_hat(O5) = determinant(F_hat(O5, :, :))
         END DO
      
          CALL vevpSplit(DFGRD1(:, :), F_vp_n(:, :),
@@ -326,7 +324,7 @@ C     !--------------------------------------------------------------
      1   B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1, k_1,
      2   kappa_tr(:, :), A_1(:, :), B_1, A_2_n(:,:), A_3_n(:,:),
      3   B_2_n, B_3_n, A_2(:,:), B_2, A_3(:,:), B_3, g_2, g_3, GG_2,
-     4   GG_3, KK_2, KK_3, k_2, k_3)
+     4   GG_3, KK_2, KK_3, k_2, k_3, GG_e, KK_e)
 
      
 
@@ -336,7 +334,7 @@ C     !--------------------------------------------------------------
      2   , k_1, kappa_tr_hat(O5, :, :), A_1_hat(O5, :, :)
      3   , B_1_hat(O5), A_2_n(:,:), A_3_n(:,:), B_2_n, B_3_n,
      4    A_2_hat(O5, :,:), B_2_hat(O5), A_3_hat(O5, :,:),B_3_hat(O5),
-     5    g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3)
+     5    g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3, GG_e, KK_e)
        END DO
 
        
@@ -360,175 +358,169 @@ C     !--------------------------------------------------------------
      1   tau_tr_hat(O5, :, :))
       END DO
 
-       ! Calculate yield function at VE trial state
+      ! Calculate yield function at VE trial state
 
-        ! Get phi_e_tr, phi_p_tr
-        phi_tr(:, :) = kappa_tr(:,:) - b_tr(:,:)
-        
-        CALL tr_dev_split(phi_tr(:,:), dev_phi_tr(:,:), tr_phi_tr)
-        phi_p_tr = tr_phi_tr / 3.D0
+      ! Get phi_e_tr, phi_p_tr
+      phi_tr(:, :) = kappa_tr(:,:) - b_tr(:,:)
+      
+      CALL tr_dev_split(phi_tr(:,:), dev_phi_tr(:,:), tr_phi_tr)
+      phi_p_tr = tr_phi_tr / 3.D0
 
-        CALL mat2ddot(dev_phi_tr(:, :), dev_phi_tr(:, :), phi_e_tr)
-        phi_e_tr = (3.D0 / 2.D0) * phi_e_tr
-        phi_e_tr = SQRT(phi_e_tr)
-
-
-        ptilde = phi_p_tr
-        PhiEq = phi_e_tr
-
-        GAMMA = 0.0D0
+      CALL mat2ddot(dev_phi_tr(:, :), dev_phi_tr(:, :), phi_e_tr)
+      phi_e_tr = (3.D0 / 2.D0) * phi_e_tr
+      phi_e_tr = SQRT(phi_e_tr)
 
 
-        DO O5 = 1, 6
-          phi_tr_hat(O5, :, :) = kappa_tr_hat(O5, :,:) - b_tr(:,:)
-        
-          CALL tr_dev_split(phi_tr_hat(O5, :,:), 
+      ptilde = phi_p_tr
+      PhiEq = phi_e_tr
+
+      GAMMA = 0.0D0
+
+
+      DO O5 = 1, 6
+        phi_tr_hat(O5, :, :) = kappa_tr_hat(O5, :,:) - b_tr(:,:)
+      
+        CALL tr_dev_split(phi_tr_hat(O5, :,:), 
      1     dev_phi_tr_hat(O5,:,:), tr_phi_tr_hat(O5))
-          phi_p_tr_hat(O5) = tr_phi_tr_hat(O5) / 3.D0
-  
-          CALL mat2ddot(dev_phi_tr_hat(O5, :, :),
+        phi_p_tr_hat(O5) = tr_phi_tr_hat(O5) / 3.D0
+
+        CALL mat2ddot(dev_phi_tr_hat(O5, :, :),
      1      dev_phi_tr_hat(O5, :, :), phi_e_tr_hat(O5))
-          phi_e_tr_hat(O5) = (3.D0 / 2.D0) * phi_e_tr_hat(O5)
-          phi_e_tr_hat(O5) = SQRT(phi_e_tr_hat(O5))
-  
-  
-          ptilde_hat(O5) = phi_p_tr_hat(O5)
-          PhiEq_hat(O5) = phi_e_tr_hat(O5)
-  
-          GAMMA_hat(O5) = 0.0D0
-        END DO
+        phi_e_tr_hat(O5) = (3.D0 / 2.D0) * phi_e_tr_hat(O5)
+        phi_e_tr_hat(O5) = SQRT(phi_e_tr_hat(O5))
 
-        CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma_n, sigma_c,HHc)
-        CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma_n, sigma_t,HHt)
 
-        ! sigma_t = m * sigma_c
-        ! HHt = HHc
-        CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
-        
-        CALL getB(h_b0, h_b1, h_b2, gma_n, b_e, HHb, dHHbdgma)
+        ptilde_hat(O5) = phi_p_tr_hat(O5)
+        PhiEq_hat(O5) = phi_e_tr_hat(O5)
 
-        GG_til = GG_e + (k/2.D0)*HHb
-        KK_til = KK_e + (k/3.D0)*HHb
+        GAMMA_hat(O5) = 0.0D0
+      END DO
 
-        F_tr = a2 * PhiEq**alpha  - a1 * ptilde - a0
+      CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma_n, sigma_c,HHc)
+      CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma_n, sigma_t,HHt)
 
-        ! DfDGamma = 0.D0
-        
+      CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
+      
+      CALL getB(h_b0, h_b1, h_b2, gma_n, b_e, HHb, dHHbdgma)
 
-        u = 1.D0
-        v = 1.D0
+      GG_til = GG_e + (k/2.D0)*HHb
+      KK_til = KK_e + (k/3.D0)*HHb
 
-         A = (6.D0 * (PhiEq**2.D0)
+      F_tr = a2 * PhiEq**alpha  - a1 * ptilde - a0
+
+      u = 1.D0
+      v = 1.D0
+
+      A = (6.D0 * (PhiEq**2.D0)
      1        + (4.D0 / 3.D0) * (beta**2.D0) 
      2        * (ptilde ** 2.D0)) ** 0.5D0
 
-        ! dDgammaDGamma = 0.D0
-        ! Dgamma = 0.D0
-
-        DO O5 = 1, 6
-          F_tr_hat(O5) = a2 * PhiEq_hat(O5)**alpha  
+   
+      DO O5 = 1, 6
+        F_tr_hat(O5) = a2 * PhiEq_hat(O5)**alpha  
      1                 - a1 * ptilde_hat(O5) - a0
 
-        ! DfDGamma = 0.D0
+      ! DfDGamma = 0.D0
 
-        u_hat(O5) = 1.D0
-        v_hat(O5) = 1.D0
+      u_hat(O5) = 1.D0
+      v_hat(O5) = 1.D0
 
-         A_hat(O5) = (6.D0 * (PhiEq_hat(O5)**2.D0)
+        A_hat(O5) = (6.D0 * (PhiEq_hat(O5)**2.D0)
      1        + (4.D0 / 3.D0) * (beta**2.D0) 
      2        * (ptilde_hat(O5) ** 2.D0)) ** 0.5D0
 
-        ! dDgammaDGamma = 0.D0
-        ! Dgamma = 0.D0
-        END DO
+      ! dDgammaDGamma = 0.D0
+      ! Dgamma = 0.D0
+      END DO
 
         
-        ! Check for yielding
-        WRITE(*,*) "F_tr : ", F_tr
-        IF(F_tr .LE. 9.99D-6) THEN
-          ! Update VE internal variables
-          STATEV(10) = B_1
-          ! Store A_1 in the statev vector
-          DO O1 = 1, 3
-            STATEV(10 + O1) = A_1(O1, O1)
-          END DO
-          STATEV(14) = A_1(1, 2)
-          STATEV(15) = A_1(1, 3)
-          STATEV(16) = A_1(2, 3)
-          STATEV(17) = A_1(2, 1)
-          STATEV(18) = A_1(3, 1)
-          STATEV(19) = A_1(3, 2)
+      ! Check for yielding
+      WRITE(*,*) "F_tr : ", F_tr
 
-          STATEV(39) = A_2(1, 1)
-          STATEV(40) = A_2(2, 2)
-          STATEV(41) = A_2(3, 3)
-          STATEV(42) = A_2(1, 2)
-          STATEV(43) = A_2(1, 3)
-          STATEV(44) = A_2(2, 3)
-          STATEV(45) = A_2(2, 1)
-          STATEV(46) = A_2(3, 1)
-          STATEV(47) = A_2(3, 2)
-          STATEV(48) = A_3(1, 1)
-          STATEV(49) = A_3(2, 2)
-          STATEV(50) = A_3(3, 3)
-          STATEV(51) = A_3(1, 2)
-          STATEV(52) = A_3(1, 3)
-          STATEV(53) = A_3(2, 3)
-          STATEV(54) = A_3(2, 1)
-          STATEV(55) = A_3(3, 1)
-          STATEV(56) = A_3(3, 2)
+        ! If VE Step Return trial state
+      IF(F_tr .LE. 9.99D-6) THEN
+        ! Update VE internal variables
+        STATEV(10) = B_1
+        ! Store A_1 in the statev vector
+        DO O1 = 1, 3
+          STATEV(10 + O1) = A_1(O1, O1)
+        END DO
+        STATEV(14) = A_1(1, 2)
+        STATEV(15) = A_1(1, 3)
+        STATEV(16) = A_1(2, 3)
+        STATEV(17) = A_1(2, 1)
+        STATEV(18) = A_1(3, 1)
+        STATEV(19) = A_1(3, 2)
 
-          STATEV(57) = B_2
-          STATEV(58) = B_3
+        STATEV(39) = A_2(1, 1)
+        STATEV(40) = A_2(2, 2)
+        STATEV(41) = A_2(3, 3)
+        STATEV(42) = A_2(1, 2)
+        STATEV(43) = A_2(1, 3)
+        STATEV(44) = A_2(2, 3)
+        STATEV(45) = A_2(2, 1)
+        STATEV(46) = A_2(3, 1)
+        STATEV(47) = A_2(3, 2)
+        STATEV(48) = A_3(1, 1)
+        STATEV(49) = A_3(2, 2)
+        STATEV(50) = A_3(3, 3)
+        STATEV(51) = A_3(1, 2)
+        STATEV(52) = A_3(1, 3)
+        STATEV(53) = A_3(2, 3)
+        STATEV(54) = A_3(2, 1)
+        STATEV(55) = A_3(3, 1)
+        STATEV(56) = A_3(3, 2)
 
+        STATEV(57) = B_2
+        STATEV(58) = B_3
 
-          ! Store E_ve in the statev vector
-          STATEV(20) = E_ve_tr(1, 1)
-          STATEV(21) = E_ve_tr(2, 2)
-          STATEV(22) = E_ve_tr(3, 3)
-          STATEV(23) = E_ve_tr(1, 2)
-          STATEV(24) = E_ve_tr(1, 3)
-          STATEV(25) = E_ve_tr(2, 3)
-          STATEV(26) = E_ve_tr(2, 1)
-          STATEV(27) = E_ve_tr(3, 1)
-          STATEV(28) = E_ve_tr(3, 2)
+        ! Store E_ve in the statev vector
+        STATEV(20) = E_ve_tr(1, 1)
+        STATEV(21) = E_ve_tr(2, 2)
+        STATEV(22) = E_ve_tr(3, 3)
+        STATEV(23) = E_ve_tr(1, 2)
+        STATEV(24) = E_ve_tr(1, 3)
+        STATEV(25) = E_ve_tr(2, 3)
+        STATEV(26) = E_ve_tr(2, 1)
+        STATEV(27) = E_ve_tr(3, 1)
+        STATEV(28) = E_ve_tr(3, 2)
 
-          !Return cauchy stress for abaqus
+        !Return cauchy stress for abaqus
+        DO ii = 1, 3
+          STRESS(ii) = (ONE / J) * tau_tr(ii, ii)
+        END DO
+        STRESS(4) = (ONE / J) * tau_tr(1, 2)
+        STRESS(5) = (ONE / J) * tau_tr(1, 3)
+        STRESS(6) = (ONE / J) * tau_tr(2, 3)
+
+        !Turn perturbated stress into voit
+        tau_tr_hat_v(:, :) = ZERO
+        DO O5 = 1, 6
           DO ii = 1, 3
-            STRESS(ii) = (ONE / J) * tau_tr(ii, ii)
+            tau_tr_hat_v(O5, ii) = tau_tr_hat(O5, ii, ii)
           END DO
-          STRESS(4) = (ONE / J) * tau_tr(1, 2)
-          STRESS(5) = (ONE / J) * tau_tr(1, 3)
-          STRESS(6) = (ONE / J) * tau_tr(2, 3)
+          tau_tr_hat_v(O5, 4) = tau_tr_hat(O5, 1, 2)
+          tau_tr_hat_v(O5, 5) = tau_tr_hat(O5, 1, 3)
+          tau_tr_hat_v(O5, 6) = tau_tr_hat(O5, 2, 3)
+        END DO
 
-          !Turn perturbated stress into voit
-          tau_tr_hat_v(:, :) = ZERO
-          DO O5 = 1, 6
-            DO ii = 1, 3
-              tau_tr_hat_v(O5, ii) = tau_tr_hat(O5, ii, ii)
-            END DO
-            tau_tr_hat_v(O5, 4) = tau_tr_hat(O5, 1, 2)
-            tau_tr_hat_v(O5, 5) = tau_tr_hat(O5, 1, 3)
-            tau_tr_hat_v(O5, 6) = tau_tr_hat(O5, 2, 3)
-          END DO
-
-          !Tangent for Abaqus
-          DO ii = 1, 6
-            DO jj = 1, 6
-              DDSDDE(ii, jj) = (ONE / (J * TOLL))
+        !Tangent for Abaqus
+        DO ii = 1, 6
+          DO jj = 1, 6
+            DDSDDE(ii, jj) = (ONE / (J * TOLL))
      1                     *  (tau_tr_hat_v(jj, ii) - J*STRESS(ii)) 
-            END DO
           END DO
+        END DO
 
-          WRITE(*,*) "Tangent"
-          DO ii = 1, 6
-            WRITE(*,*) DDSDDE(ii, :)
-          END DO
+        WRITE(*,*) "Tangent"
+        DO ii = 1, 6
+          WRITE(*,*) DDSDDE(ii, :)
+        END DO
 
 
         ELSE
 
-          ! VEVP  Here
+          ! Make VP Corrections
 
           CALL nlinSolver(F_tr, eta, DTIME, GG_til, PhiEq, u,
      1      KK_til, beta, ptilde, v, A, k, GAMMA, HHt, sigma_c, HHc,
@@ -567,7 +559,7 @@ C     !--------------------------------------------------------------
      1   B_1_n, DTIME, GG_inf, GG_1, g_1, KK_inf, KK_1, k_1,
      2   kappa(:, :), A_1(:, :), B_1, A_2_n(:,:), A_3_n(:,:),
      3   B_2_n, B_3_n, A_2(:,:), B_2, A_3(:,:), B_3, g_2, g_3, GG_2,
-     4   GG_3, KK_2, KK_3, k_2, k_3)
+     4   GG_3, KK_2, KK_3, k_2, k_3, GG_e, KK_e)
 
           STATEV(1) = F_vp(1, 1)
           STATEV(2) = F_vp(2, 2)
@@ -641,6 +633,8 @@ C     !--------------------------------------------------------------
          CALL mat2dot(F_ve(:, :), S(:, :), temp6(:, :))
          CALL mat2dotT(temp6(:, :), F_ve(:, :), tau(:, :))
 
+        
+
           DO O5 = 1, 6
 
             CALL nlinSolver(F_tr_hat(O5), eta, DTIME, GG_til,
@@ -688,7 +682,7 @@ C     !--------------------------------------------------------------
      2   , k_1, kappa_hat(O5, :, :), A_1_hat(O5, :, :)
      3   , B_1_hat(O5), A_2_n(:,:), A_3_n(:,:), B_2_n, B_3_n,
      4    A_2_hat(O5, :,:), B_2_hat(O5), A_3_hat(O5, :,:),B_3_hat(O5),
-     5   g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3)
+     5   g_2, g_3, GG_2, GG_3, KK_2, KK_3, k_2, k_3, GG_e, KK_e)
        
 
             ! Calculate S as per Ludovic's paper
@@ -1259,7 +1253,7 @@ C     !--------------------------------------------------------------
       SUBROUTINE vePredictor_log(E_ve, E_ve_n, A1_n, B1_n,
      1    dt, GGinf, GG1, g1, KKinf, KK1, k1, kappa, A1, B1,
      2    A2_n, A3_n, B2_n, B3_n, A2, B2, A3, B3, g2, g3, GG2, GG3,
-     3    KK2, KK3, k2, k3)
+     3    KK2, KK3, k2, k3, GGe, KKe)
 
          IMPLICIT NONE
         INTEGER, PARAMETER :: double=kind(1.d0)
@@ -1271,12 +1265,12 @@ C     !--------------------------------------------------------------
         REAL(prec), INTENT(IN)  :: A2_n(3, 3), A3_n(3, 3), B2_n, B3_n
         REAL(prec), INTENT(IN)  :: g2, g3, GG2, GG3, k2, k3, KK2, KK3
         REAL(prec), INTENT(OUT) :: kappa(3, 3), A1(3, 3), B1
-        REAL(prec), INTENT(OUT) :: A2(3, 3), B2, A3(3, 3), B3
+        REAL(prec), INTENT(OUT) :: A2(3, 3), B2, A3(3, 3), B3, GGe, KKe
 
         INTEGER  :: O1, ii, jj
         REAL(prec) :: dev_E_ve(3, 3), tr_E_ve, DE_ve(3, 3)
         REAL(prec) :: dev_DE_ve(3, 3), tr_DE_ve, dtg1, expmdtg1, ztag1
-        REAL(prec) :: dtk1, expmdtk1, ztak1, dev_kappa(3, 3), GGe,KKe
+        REAL(prec) :: dtk1, expmdtk1, ztak1, dev_kappa(3, 3)
         REAL(prec) :: p, I_mat(3, 3), dtg2, expmdtg2, ztag2, dtg3
         REAL(prec) :: expmdtg3, ztag3, dtk2, dtk3, expmdtk2, expmdtk3
         REAL(prec) :: ztak2, ztak3
@@ -1380,82 +1374,83 @@ C     !--------------------------------------------------------------
 
           DO WHILE (((ABS(F_tr) .GE. TOLL_G) .OR. (iter_G .LT. 1))
      1        .AND. (iter_G .LE. 300))
-              etaOverDt = eta / DTIME
-              dAdGamma = -(72.D0 * GG_til * PhiEq * PhiEq /u 
+              
+            etaOverDt = eta / DTIME
+            dAdGamma = -(72.D0 * GG_til * PhiEq * PhiEq /u 
      1         + 16.D0 * KK_til * beta*beta*beta*ptilde*ptilde
      2         /(3.D0*v)) / (2.D0 * A)
 
-              dDgammaDGamma = k*(A + GAMMA * dAdGamma)
+            dDgammaDGamma = k*(A + GAMMA * dAdGamma)
 
-              Dm = (HHt*sigma_c - HHc*sigma_t) / (sigma_c * sigma_c)
+            Dm = (HHt*sigma_c - HHc*sigma_t) / (sigma_c * sigma_c)
 
-              Da1Dm  = (3.D0 / sigma_c) 
+            Da1Dm  = (3.D0 / sigma_c) 
      1             * (alpha * (m**(alpha - 1.D0))/(m + 1.D0) 
      2             - (((m**alpha) - 1.D0)/(m + 1.D0))/(m + 1.D0)) 
             
-              H2 = -alpha * (sigma_c**(-alpha - 1.D0)) * HHc
+            H2 = -alpha * (sigma_c**(-alpha - 1.D0)) * HHc
 
-              H1 = Da1Dm * Dm 
+            H1 = Da1Dm * Dm 
      1           - 3.D0 * ((((m**alpha) - 1.D0) / (m + 1.D0))
      2           /(sigma_c * sigma_c))*HHc
 
-              H0 =((alpha * (m**(alpha - 1.D0)) + 1.D0) / (m + 1.D0) 
+            H0 =((alpha * (m**(alpha - 1.D0)) + 1.D0) / (m + 1.D0) 
      1            - (((m**alpha) + m)/(m + 1.D0))/(m + 1.D0))*Dm
 
-              dfdDgma = H2 * (PhiEq**alpha) -H1*ptilde - H0
+            dfdDgma = H2 * (PhiEq**alpha) -H1*ptilde - H0
 
-              DfDGamma = (dfdDgma * dDgammaDGamma) 
+            DfDGamma = (dfdDgma * dDgammaDGamma) 
      1       - (alpha * a2 * 6.D0 * GG_til) * (PhiEq**alpha) / u
      2       + a1 * ptilde * 2.D0 * beta * KK_til / v
 
-              IF ((GAMMA .GT. 0.D0) .AND. (etaOverDt .GT. 0.D0)) THEN
+            IF ((GAMMA .GT. 0.D0) .AND. (etaOverDt .GT. 0.D0)) THEN
                DfDGamma = DfDGamma - (etaOverDt**p_exp) * p_exp 
      1                  * (GAMMA**(p_exp - 1.D0))
-              END IF
+            END IF
 
-              dGamma = -F_tr / DfDGamma
+            dGamma = -F_tr / DfDGamma
 
-              IF ((GAMMA + dGamma) .LE. 0.D0) THEN
+            IF ((GAMMA + dGamma) .LE. 0.D0) THEN
                 GAMMA = GAMMA / 2.D0
 
-              ELSE
+            ELSE
                 GAMMA = GAMMA + dGamma
-              END IF
+            END IF
             
-              u = 1.D0 + 6.D0 * GG_til * GAMMA
-              v = 1.D0 + 2.D0 * beta * KK_til * GAMMA
+            u = 1.D0 + 6.D0 * GG_til * GAMMA
+            v = 1.D0 + 2.D0 * beta * KK_til * GAMMA
 
-             PhiEq = phi_e_tr / u
-             ptilde = phi_p_tr / v
+            PhiEq = phi_e_tr / u
+            ptilde = phi_p_tr / v
 
-             A = (6.D0 * (PhiEq**2.D0)
+            A = (6.D0 * (PhiEq**2.D0)
      1         + (4.D0 / 3.D0) * (beta**2.D0) 
      2         * (ptilde ** 2.D0)) ** 0.5D0
 
-             Dgma = k * GAMMA * A
+            Dgma = k * GAMMA * A
 
-             gma = gma_n + Dgma
+            gma = gma_n + Dgma
 
-          CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma, sigma_c,HHc)
-          CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma, sigma_t,HHt)
+            CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma, sigma_c,HHc)
+            CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma, sigma_t,HHt)
             !  sigma_t = m * sigma_c
             !  HHt = HHc
-             CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
+            CALL geta(alpha, sigma_c, sigma_t, m, a0, a1, a2)
             
-             CALL getB(h_b0, h_b1, h_b2, gma, b_e, HHb, dHHbdgma)
+            CALL getB(h_b0, h_b1, h_b2, gma, b_e, HHb, dHHbdgma)
 
-             GG_til = GG_e + (k/2.D0)*HHb
-             KK_til = KK_e + (k/3.D0)*HHb
+            GG_til = GG_e + (k/2.D0)*HHb
+            KK_til = KK_e + (k/3.D0)*HHb
 
-             F_tr = a2 * PhiEq**alpha  - a1 * ptilde - a0
+            F_tr = a2 * PhiEq**alpha  - a1 * ptilde - a0
 
-             viscoterm = etaOverDt * GAMMA
+            viscoterm = etaOverDt * GAMMA
 
-             IF ((GAMMA .GT. 0.D0) .AND. (etaOverDt .GT. 0.D0)) THEN
+            IF ((GAMMA .GT. 0.D0) .AND. (etaOverDt .GT. 0.D0)) THEN
                F_tr = F_tr - viscoterm ** p_exp
-             END IF
+            END IF
 
-             iter_G = iter_G + 1
+            iter_G = iter_G + 1
 
           END DO
           
