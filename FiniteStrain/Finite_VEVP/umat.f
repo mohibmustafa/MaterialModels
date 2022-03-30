@@ -128,7 +128,10 @@ C     !--------------------------------------------------------------
         REAL(prec) :: KK_2, k_2, KK_3, k_3, GG_2, g_2, GG_3, g_3
         REAL(prec) :: A_2_n(3, 3), A_3_n(3, 3), B_2_n, B_3_n, A_2(3, 3)
         REAL(prec) :: B_2, A_3(3,3), B_3, A_2_hat(6,3,3), B_2_hat(6)
-        REAL(prec) :: A_3_hat(6,3,3), B_3_hat(6)
+        REAL(prec) :: A_3_hat(6,3,3), B_3_hat(6), GG_til_hat(6)
+        REAL(prec) :: KK_til_hat(6), HHt_hat(6), sigma_c_hat(6)
+        REAL(prec) :: HHc_hat(6), sigma_t_hat(6), m_hat(6), a0_hat(6)
+        REAL(prec) :: a1_hat(6), a2_hat(6), gma_n_hat(6), HHb_hat(6)
 
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
@@ -417,8 +420,24 @@ C     !--------------------------------------------------------------
 
    
       DO O5 = 1, 6
-        F_tr_hat(O5) = a2 * PhiEq_hat(O5)**alpha  
-     1                 - a1 * ptilde_hat(O5) - a0
+
+      CALL getC(sigma_c0, h_c1, h_c2, h_cexp, gma_n,
+     1  sigma_c_hat(O5), HHc_hat(O5))
+      CALL getC(sigma_t0, h_t1, h_t2, h_texp, gma_n,
+     1  sigma_t_hat(O5), HHt_hat(O5))
+
+      CALL geta(alpha, sigma_c_hat(O5), sigma_t_hat(O5), m_hat(O5),
+     1  a0_hat(O5), a1_hat(O5), a2_hat(O5))
+      
+      CALL getB(h_b0, h_b1, h_b2, gma_n, b_e, HHb_hat(O5), dHHbdgma)
+
+      GG_til_hat(O5) = GG_e + (k/2.D0)*HHb_hat(O5)
+      KK_til_hat(O5) = KK_e + (k/3.D0)*HHb_hat(O5)
+
+
+
+        F_tr_hat(O5) = a2_hat(O5) * PhiEq_hat(O5)**alpha  
+     1                 - a1_hat(O5) * ptilde_hat(O5) - a0_hat(O5)
 
       ! DfDGamma = 0.D0
 
@@ -637,13 +656,15 @@ C     !--------------------------------------------------------------
 
           DO O5 = 1, 6
 
-            CALL nlinSolver(F_tr_hat(O5), eta, DTIME, GG_til,
-     1        PhiEq_hat(O5), u_hat(O5), KK_til, beta, ptilde_hat(O5),
-     2        v_hat(O5), A_hat(O5), k, GAMMA_hat(O5), HHt, sigma_c,
-     3        HHc, sigma_t, alpha, m, a0, a1, a2, p_exp, gma_n,
-     4        sigma_c0, h_c1, h_c2, h_cexp, h_b0, h_b1, h_b2, GG_e,
-     5        KK_e, phi_e_tr_hat(O5), phi_p_tr_hat(O5), sigma_t0,
-     6        h_t1, h_t2, h_texp)
+            CALL nlinSolver(F_tr_hat(O5), eta, DTIME, GG_til_hat(O5),
+     1        PhiEq_hat(O5), u_hat(O5), KK_til_hat(O5), beta,
+     2        ptilde_hat(O5), v_hat(O5), A_hat(O5), k, GAMMA_hat(O5),
+     3        HHt_hat(O5), sigma_c_hat(O5), HHc_hat(O5),
+     4        sigma_t_hat(O5), alpha, m_hat(O5), a0_hat(O5),
+     5        a1_hat(O5), a2_hat(O5), p_exp, gma_n_hat(O5),
+     6        sigma_c0, h_c1, h_c2, h_cexp, h_b0, h_b1, h_b2, GG_e,
+     7        KK_e, phi_e_tr_hat(O5), phi_p_tr_hat(O5), sigma_t0,
+     8        h_t1, h_t2, h_texp)
 
             
             dev_phi_hat(O5,:,:) = dev_phi_tr_hat(O5,:,:) / u_hat(O5)
