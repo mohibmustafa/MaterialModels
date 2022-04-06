@@ -136,7 +136,7 @@ C     !--------------------------------------------------------------
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
         REAL(prec), PARAMETER :: THREE=3.D0, FOUR= 4.D0, SIX=6.D0
-        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.001D0    ! Be carefull this toll is used by perturb_F Subroutine
+        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.0001D0    ! Be carefull this toll is used by perturb_F Subroutine
         REAL(prec), PARAMETER :: TOLL_N=0.0000001D0         ! This toll is used by newton raphson routine
         REAL(prec), PARAMETER :: TOLL_G=0.999D-7
         !Define 2nd order identity tensor
@@ -858,7 +858,7 @@ C     !--------------------------------------------------------------
         !Decleration of constants
         REAL(prec), PARAMETER :: ZERO=0.D0, ONE=1.D0, TWO=2.D0
         REAL(prec), PARAMETER :: THREE=3.D0, FOUR= 4.D0, SIX=6.D0
-        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.001D0 
+        REAL(prec), PARAMETER :: NINE=9.D0, TOLL=0.0001D0 
 
         !Define 4th order identity tensor
         data I_mat(1,:) /ONE, ZERO, ZERO/
@@ -1477,8 +1477,8 @@ C     !--------------------------------------------------------------
           
           gma_n = gma
 
-          WRITE(*,*) "Iter : ", iter_G
-          WRITE(*,*) "GAMMA : ", GAMMA
-          WRITE(*,*) "RESI : ", ABS(F_tr)
-          WRITE(*,*) "-------------------------------------------"
+          ! WRITE(*,*) "Iter : ", iter_G
+          ! WRITE(*,*) "GAMMA : ", GAMMA
+          ! WRITE(*,*) "RESI : ", ABS(F_tr)
+          ! WRITE(*,*) "-------------------------------------------"
         END SUBROUTINE nlinSolver
