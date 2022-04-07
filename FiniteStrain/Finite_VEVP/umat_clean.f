@@ -129,8 +129,8 @@ C     !--------------------------------------------------------------
          REAL(prec) :: tau_hat_v(6,6)
 
         ! Tollerances
-         REAL(prec), PARAMETER :: TOLL=0.001D0, TOLL_G=0.999D-7
-         INTEGER, PARAMETER :: MAX_i=300
+         REAL(prec), PARAMETER :: TOLL=0.001D0, TOLL_G=0.999D-11
+         INTEGER, PARAMETER :: MAX_i=500
 
         !Define 2nd order identity tensor
          data I_mat(1,:) /1.D0, 0.D0, 0.D0/
