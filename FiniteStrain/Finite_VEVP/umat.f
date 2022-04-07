@@ -208,8 +208,8 @@ C     !--------------------------------------------------------------
          ! Calculate the corotated kirchoff stress at trial state along 
          ! with VE internal variables
          CALL vePredictor_log(E_ve_tr(:,:), E_ve_n(:,:), AA_n(:,:,:),
-     1             BB_n(:), DTIME, PROPS, AA_tr(:,:,:), BB_tr(:), GGe, KKe,
-     2             kappa_tr(:,:))
+     1             BB_n(:), DTIME, PROPS, AA_tr(:,:,:), BB_tr(:), GGe,
+     2             KKe, kappa_tr(:,:))
 
          ! Check yielding at trial state => gma = gma_n,  u=1, v=1, GAMMA = 0
            
