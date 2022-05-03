@@ -1,21 +1,36 @@
 C     UMAT - Finite strain VEVP
-C     Based on Paper by Nguyen and Noels
+C     Based on Paper by V.-D.Nguyen et al. https://orbi.uliege.be/handle/2268/197898
 
+C     Total no of material parameters : 30 
+C     Total no of internal variables (STATEV) : 58
+C     
+C     Note: The UMAT is hardcoded for 3 Maxwell VE Branches.
+C           If you feel the need for more branches send me an email
+C           I will add more.
+C
+C     Note: Tollerance and max iteration for the newton raphson solver are hard coded
+C           as variables TOLL_G and MAX_i respectively
+C
 C     Note : Computations are done in standard matrix notation and
-C            at the end changed to voit where needed for return to main 
-C            routine. I understand this isnt the most elegant way of 
-C            doing things but when dealing with 2nd order tensors 
-C            with 4 or more dummy indices, I feel I can code much 
+C            at the end changed to voit notation where needed for return to main 
+C            routine. I understand this isn't the most elegant way of 
+C            doing things but when dealing with tensors 
+C            with 4 or more dummy indices, I can code much 
 C            faster this way. If you know the algebra and have the 
-C            time to work in voit notation change it and send me an 
-C            email at mohibmustafa@gmail.com
+C            time to work in voit notation, change it and send me an 
+C            email.
 C
-C
-
-C     Note : All consistent tangents are calculated numerically. 
+C     Note : Consistent tangents are calculated numerically. 
+C            Tollerance for numeric tangent is hardcoded as variable TOLL.
 
 C     Mohib Mustafa - IMDEA 15 March 2022
+C     mohibmustafa@gmail.com
 
+
+
+C     !--------------------------------------------------------------
+C     !                     UMAT SUBROUTINE
+C     !--------------------------------------------------------------
 
       SUBROUTINE UMAT(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
      1           RPL,DDSDDT,DRPLDE,DRPLDT,
@@ -44,7 +59,7 @@ C     Mohib Mustafa - IMDEA 15 March 2022
 
 
 C     !--------------------------------------------------------------
-C     !                     UMAT SUBROUTINE
+C     !                Finite Strain VEVP Subroutine
 C     !--------------------------------------------------------------
 
       SUBROUTINE VEVP(STRESS,STATEV,DDSDDE,STRAN,NTENS,NSTATV,
@@ -66,7 +81,7 @@ C     !--------------------------------------------------------------
          REAL(prec), INTENT(OUT)   :: stress(ntens)
          REAL(prec), INTENT(OUT)   :: ddsdde(ntens,ntens), PNEWDT    
 
-         !List of local variables
+         !Declaration of local variables
          INTEGER    :: ii, jj, O6, order
          REAL(prec) :: I_mat(3,3)
          ! Internal Variables 
@@ -84,10 +99,10 @@ C     !--------------------------------------------------------------
          REAL(prec) :: ddlogC_ve_tr(3,3,3,3,3,3), AA_tr(3,3,3)
          REAL(prec) :: BB_tr(3),GGe, KKe, kappa_tr(3, 3), S_tr(3, 3)
          REAL(prec) :: temp1(3,3), tau_tr(3, 3)
-         ! variables for trial yield
+         ! Variables for trial yield
          REAL(prec) :: phi_tr(3, 3), tr_phi_tr, dev_phi_tr(3, 3)
          REAL(prec) :: phi_p_tr, phi_e_tr, F_tr
-         ! trial VE variables perturbation
+         ! trial VE variables - perturbation
          REAL(prec) :: F_hat(6, 3, 3), J, F_ve_tr_hat(6, 3, 3)
          REAL(prec) :: C_ve_tr_hat(6, 3, 3), D_ve_tr_hat(6,3,3)
          REAL(prec) :: E_ve_tr_hat(6,3,3), dlogC_ve_tr_hat(6,3,3,3,3)
@@ -102,7 +117,7 @@ C     !--------------------------------------------------------------
          REAL(prec) :: m, a0, a1, a2, GAMMA, u, v, dev_phi(3, 3)
          REAL(prec) :: dev_Q(3, 3), tr_Q, Q(3, 3), GQ(3,3)
          REAL(prec) :: exp_GQ(3, 3), F_vp(3,3), F_vp_inv(3,3)
-         ! VE corrected  variables
+         ! VE corrected variables
          REAL(prec) :: F_ve(3, 3), C_ve(3, 3), D_ve(3, 3), E_ve(3, 3)
          REAL(prec) :: dlogC_ve(3,3,3,3), ddlogC_ve(3,3,3,3,3,3)
          REAL(prec) :: AA(3,3,3), BB(3), kappa(3, 3), b(3, 3)
@@ -138,8 +153,9 @@ C     !--------------------------------------------------------------
          data I_mat(3,:) /0.D0, 0.D0, 1.D0/
 
         ! This is a workaround to set the diagnol values of F_vp = 1
-        ! in FFTMAD. Can be removed for ABAQUS, IN abaqus use the inp
-        ! file to set initail values for C_vp
+        ! for the first time step (initial condition) in FFTMAD.
+        ! Can be commented out for ABAQUS, If you comment out, then
+        ! in abaqus use the inp file to set initial values for F_vp.
          IF ((KINC .EQ. 1) .AND. (KSTEP .EQ. 1)) THEN
           STATEV(1) = 1.D0
           STATEV(2) = 1.D0
@@ -193,13 +209,13 @@ C     !--------------------------------------------------------------
          g(2)          =PROPS(29)
          g(3)          =PROPS(30)
 
-         ! compute det(F)
+         ! Compute determinant of F (Deformation Gradient)
          CALL determinant(DFGRD1(:,:), J)
         ! Calculate VE Right Cauchy Green Tensor (C_ve) at trial State
          CALL vevpSplit(DFGRD1(:, :), F_vp_n(:, :),
      1                  F_ve_tr(:, :), C_ve_tr(:, :))
 
-         ! Approximate VE log Strain at trial state 
+         ! Approximate VE log Strain (power series) at trial state 
          D_ve_tr(:,:) = C_ve_tr(:, :) - I_mat(:,:)
          CALL approx_log(D_ve_tr(:,:), order, E_ve_tr(:, :),
      1               dlogC_ve_tr(:,:,:,:), ddlogC_ve_tr(:,:,:,:,:,:))
@@ -212,7 +228,6 @@ C     !--------------------------------------------------------------
      2             KKe, kappa_tr(:,:))
 
          ! Check yielding at trial state => gma = gma_n,  u=1, v=1, GAMMA = 0
-           
          ! Get phi_e_tr, phi_p_tr
          phi_tr(:, :) = kappa_tr(:,:) - b_n(:,:)
              
@@ -266,7 +281,7 @@ C     !--------------------------------------------------------------
           
           END DO
 
-
+          ! In case the yield surface is not breached for the trial state (VE step)
          IF(F_tr .LE. TOLL_G) THEN
          
           ! Calculate 2Pk as per paper
@@ -285,7 +300,7 @@ C     !--------------------------------------------------------------
           STRESS(5) = (1.D0 / J) * tau_tr(1, 3)
           STRESS(6) = (1.D0 / J) * tau_tr(2, 3)
 
-          ! Update internal variables for trial state
+          ! Update internal variables for trial state. No need to update VP internal variables
           CALL mat2voit(E_ve_tr(:,:),STATEV(10:18))
           CALL mat2voit(AA_tr(1,:,:),STATEV(29:37))
           CALL mat2voit(AA_tr(2,:,:),STATEV(38:46))
@@ -294,9 +309,7 @@ C     !--------------------------------------------------------------
           STATEV(57)=BB_tr(2)
           STATEV(58)=BB_tr(3)
           
-          
-
-          !Turn perturbated stress into voit
+          !Turn perturbated stress into voit notation
           tau_tr_hat_v(:, :) = 0.D0
           DO O6 = 1, 6
             DO ii = 1, 3
@@ -307,7 +320,7 @@ C     !--------------------------------------------------------------
             tau_tr_hat_v(O6, 6) = tau_tr_hat(O6, 2, 3)
           END DO
 
-          !Tangent for Abaqus
+          !Compute Tangent for Abaqus
           DO ii = 1, 6
             DO jj = 1, 6
               DDSDDE(ii, jj) = (1.D0 / (J * TOLL))
@@ -316,14 +329,14 @@ C     !--------------------------------------------------------------
           END DO
 
          
-
+        ! In case the yield surface is breached at trail state, corrector steps are needed
         ELSE
-          ! Solve Newton Raphson to get GAMMA, gma and related variables
+          ! Use Newton Raphson scheme to get GAMMA, gma and related variables
           CALL nlinSolver(PROPS, DTIME, TOLL_G, MAX_i,
      1      GGe, KKe,
      1      F_tr, gma_n, ptilde, PhiEq, GAMMA, u, v, beta, k_plast)
 
-          ! Update dev_phi and ptilde (already returned by the subrout)
+          ! Update dev_phi (updated ptilde already returned by the subroutine)
           dev_phi(:,:) = dev_phi_tr(:,:) / u
 
           ! Update flow normal Q
@@ -339,19 +352,20 @@ C     !--------------------------------------------------------------
           CALL mat2dot(DFGRD1(:,:), F_vp_inv(:,:), F_ve(:, :))
           CALL mat2Tdot(F_ve(:,:), F_ve(:,:), C_ve(:,:))
 
-          ! Approximate VE log Strain at the corrected state
+          ! Approximate VE log Strain (power series) at the corrected state
           D_ve(:,:) = C_ve(:, :) - I_mat(:,:)
           CALL approx_log(D_ve(:,:), order, E_ve(:, :),
      1                     dlogC_ve(:,:,:,:), ddlogC_ve(:,:,:,:,:,:))
           E_ve(:, :) = 0.5D0 * E_ve(:, :)
 
           ! Calculate the corotated kirchoff stress at corrected state along 
-          ! with VE internal variables
+          ! with VE internal variables. Note : I know i am calculating the stresses again, whereas
+          ! I just need to correct the VE internal variables, it doesnt affect performance alot. 
           CALL vePredictor_log(E_ve(:,:), E_ve_n(:,:), AA_n(:,:,:),
      1             BB_n(:), DTIME, PROPS, AA(:,:,:), BB(:), GGe, KKe,
      2             kappa(:,:))
 
-          ! Calculate 2PK stress at  corrected state
+          ! Calculate 2PK stress at corrected state
           CALL mat24ddot(kappa(:, :), dlogC_ve(:, :, :, :), S(:, :))
           ! Calculate kirchoff stress at corrected state
           CALL mat2dot(F_ve(:, :), S(:, :), temp2(:, :))
@@ -385,8 +399,6 @@ C     !--------------------------------------------------------------
           DO O6  =  1, 6
            
           gma_n_hat(O6) = gma_n
-          
-          ! Check yielding at Perturbated state 
            
           ! Get phi_e_tr, phi_p_tr
           phi_tr_hat(O6, :, :) = kappa_tr_hat(O6, :,:) - b_n(:,:)
@@ -403,7 +415,7 @@ C     !--------------------------------------------------------------
           ptilde_hat(O6) = phi_p_tr_hat(O6)
           PhiEq_hat(O6) = phi_e_tr_hat(O6)
     
-          ! Update hardening variables on puturb state
+          ! Update hardening variables on purturb state
           CALL hardn(PROPS, gma_n_hat(O6), sigma_c_hat(O6),
      1      sigma_t_hat(O6), HHc_hat(O6), HHt_hat(O6), HHb_hat(O6))
           ! Update Drucker Pragger coefficients along with ecc factor m
@@ -420,7 +432,7 @@ C     !--------------------------------------------------------------
      2      PhiEq_hat(O6), GAMMA_hat(O6), u_hat(O6), v_hat(O6),
      3      beta, k_plast)
 
-          ! Update dev_phi_hat and ptilde_hat (already returned by the subrout)
+          ! Update dev_phi_hat (ptilde_hat already returned by the subroutine)
           dev_phi_hat(O6, :,:) = dev_phi_tr_hat(O6,:,:) / u_hat(O6)
 
           ! Update flow normal Q_hat
@@ -441,7 +453,7 @@ C     !--------------------------------------------------------------
      1                  C_ve_hat(O6,:,:))
 
 
-          ! Approximate VE log Strain at the purturbated state
+          ! Approximate VE log Strain (power series) at the purturbated state
           D_ve_hat(O6,:,:) = C_ve_hat(O6,:, :) - I_mat(:,:)
           CALL approx_log(D_ve_hat(O6,:,:), order, E_ve_hat(O6,:, :),
      1                     dlogC_ve_hat(O6,:,:,:,:),
@@ -466,7 +478,7 @@ C     !--------------------------------------------------------------
 
           END DO
 
-           !Turn perturbated stress into voit
+           !Turn perturbated stress into voit notation
           tau_hat_v(:, :) = 0.D0
           DO O6 = 1, 6
             DO ii = 1, 3
@@ -516,7 +528,7 @@ C     !--------------------------------------------------------------
       END SUBROUTINE
 
       !--------------------------------------------------------------
-      !     Helper function to convert a  matrix to voit array
+      !     Helper function to convert a matrix to voit array
       !--------------------------------------------------------------
 
       SUBROUTINE mat2voit(mat, voit)
@@ -592,7 +604,8 @@ C     !--------------------------------------------------------------
 
       
       !------------------------------------------------------------
-      !     Helper function to for c = a.b  
+      !     Helper function for c = a.b  
+      !   (2nd order tensors, single contraction) 
       !------------------------------------------------------------
 
       SUBROUTINE mat2dot(a, b, c)
@@ -619,7 +632,8 @@ C     !--------------------------------------------------------------
       END SUBROUTINE mat2dot
 
       !------------------------------------------------------------
-      !     Helper function to for c = a^T.b  
+      !     Helper function for c = a^T.b  
+      !   (2nd order tensors, single contraction) 
       !------------------------------------------------------------
       SUBROUTINE mat2Tdot(a, b, c)
         IMPLICIT NONE
@@ -645,7 +659,8 @@ C     !--------------------------------------------------------------
       END SUBROUTINE mat2Tdot
 
       !------------------------------------------------------------
-      !     Helper function
+      !     Helper function for c = a.b^T  
+      !   (2nd order tensors, single contraction) 
       !------------------------------------------------------------
       SUBROUTINE mat2dotT(a, b, c)
         IMPLICIT NONE
@@ -671,7 +686,8 @@ C     !--------------------------------------------------------------
       END SUBROUTINE mat2dotT
 
       !------------------------------------------------------------
-      !     Helper function
+      !     Helper function for c = a:b
+      !   (2nd order tensors, double contraction) 
       !------------------------------------------------------------
       SUBROUTINE mat2ddot(a, b, c)
         IMPLICIT NONE
@@ -693,8 +709,8 @@ C     !--------------------------------------------------------------
 
       END SUBROUTINE mat2ddot
 
-       !--------------------------------------------------------------
-      !     Helper function to for 2nd order 4th order contraction
+      !--------------------------------------------------------------
+      !     Helper function for 2nd order 4th order contraction
       !--------------------------------------------------------------
       SUBROUTINE mat24ddot(a, b, c)
         IMPLICIT NONE
@@ -841,7 +857,8 @@ C     !--------------------------------------------------------------
       END SUBROUTINE perturb_F
 
       !--------------------------------------------------------------
-      !      Function to compute apprrox log strains and derivatives
+      !      Function to compute approx log strains and derivatives
+      !      Power series approximation
       !--------------------------------------------------------------
 
       SUBROUTINE approx_log(AA, order, logAA, dlogAA, ddlogAA)
@@ -896,7 +913,7 @@ C     !--------------------------------------------------------------
           END IF
         END DO
 
-        ! Implementation of polynomial func DG3D
+        ! Implementation of polynomial func as per dG3D
         logAA(:, :) = 0.D0
         DO ii = 1, 3
           DO jj = 1, 3
@@ -952,6 +969,7 @@ C     !--------------------------------------------------------------
 
       !--------------------------------------------------------------
       !      Function to compute exp of matrix
+      !      Power series approximation
       !--------------------------------------------------------------
 
       SUBROUTINE approx_exp(Q, order, expQ)
@@ -1005,7 +1023,7 @@ C     !--------------------------------------------------------------
 
 
       !--------------------------------------------------------------
-      !      VE Predictor routine . 3 Branches
+      !      VE Predictor routine - 3 Maxwell Branches
       !--------------------------------------------------------------
 
       SUBROUTINE vePredictor_log(E_ve, E_ve_n, AA_n, BB_n,
@@ -1138,8 +1156,8 @@ C     !--------------------------------------------------------------
 
 
         !--------------------------------------------------------------
-         !      Drucker - Prager coefficient update subroutine
-         !--------------------------------------------------------------
+        !      Drucker - Prager coefficient update subroutine
+        !--------------------------------------------------------------
         SUBROUTINE DPcoeff(alpha, sigma_c, sigma_t, m, a0, a1, a2)
           IMPLICIT NONE
           INTEGER, PARAMETER :: double=kind(1.D0)
@@ -1163,6 +1181,10 @@ C     !--------------------------------------------------------------
           a0 = (mral + m) / mp1
   
         END SUBROUTINE DPcoeff
+
+        !--------------------------------------------------------------
+        !     NonLinear solver (Newton Raphson)
+        !--------------------------------------------------------------
 
         SUBROUTINE nlinSolver(PROPS, DTIME, TOLL, MAX_i,
      1      GGe, KKe, F, gma,
@@ -1305,7 +1327,7 @@ C     !--------------------------------------------------------------
           
 
           gma = gma_i
-
+          ! Debuging statements for N.R. Comment out for big sims
           ! WRITE(*,*) "Iter : ", iter_G
           ! WRITE(*,*) "GAMMA : ", GAMMA
           ! WRITE(*,*) "RESI : ", ABS(F)
