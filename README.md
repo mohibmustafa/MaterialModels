@@ -1,4 +1,4 @@
-UMATS for various constitutive models
+UMATs for various constitutive models
 
 Material models are arranged in parent folders for small and finite strains
 

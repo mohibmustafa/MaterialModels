@@ -1,5 +1,8 @@
 C     UMAT - Isotropic Linear Viscoelastic - Perznya type J2 Viscoplastic 
 C     (Linear Isotropic, Kinematic Hardening) coupled with Lamitre type Ductile Damage   
+C
+C     No of internal variables STATEV : 27
+C     No of material params : 16
 
 C     Mohib Mustafa - IMDEA 4 MAR 2021      
 
